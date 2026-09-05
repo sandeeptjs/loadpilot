@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+from datetime import timedelta
 
-from .models import PerformanceTestIntent, ScheduleSpec, SLOs, TestType
+from .models import PerformanceTestIntent, ScheduleSpec, SLOs, TestType, utcnow
 
 _DURATION = re.compile(r"(?P<value>\d+(?:\.\d+)?)\s*-?\s*(?P<unit>seconds?|secs?|minutes?|mins?|hours?|hrs?)", re.IGNORECASE)
 _VUS = re.compile(r"(?:roughly|approximately|about|at|with)?\s*(\d[\d,]*)\s*(?:concurrent\s+users?|users?|vus?)", re.IGNORECASE)
@@ -41,6 +42,10 @@ class DeterministicIntentCompiler:
 
         vus_match = _VUS.search(text)
         concurrency = int(vus_match.group(1).replace(",", "")) if vus_match else None
+        load_range = re.search(r'(\d+)\s*(?:to|through|-)\s*(\d+)\s*(?:concurrent\s+)?(?:users?|vus?)', lowered)
+        maximum = None
+        if load_range:
+            concurrency, maximum = map(int, load_range.groups())
         if concurrency is None:
             concurrency = 100
             inferred["target_concurrency"] = concurrency
@@ -64,7 +69,11 @@ class DeterministicIntentCompiler:
                 endpoints.append(term)
 
         schedule = None
-        if "tomorrow" in lowered or "midnight" in lowered or " at " in lowered and "run" in lowered:
+        delay = re.search(r'(?:start|schedule|run)\s+(?:it\s+)?in\s+(\d+)\s*(seconds?|minutes?)', lowered)
+        if delay:
+            seconds = int(delay.group(1)) * (60 if delay.group(2).startswith('minute') else 1)
+            schedule = ScheduleSpec(run_at=utcnow() + timedelta(seconds=seconds))
+        elif "tomorrow" in lowered or "midnight" in lowered or re.search(r'\bat\s+\d{1,2}:\d{2}', lowered):
             schedule = ScheduleSpec(recurrence="natural-language schedule requires provider resolution")
             ambiguities.append("Schedule needs timezone-aware resolution")
 
@@ -77,6 +86,7 @@ class DeterministicIntentCompiler:
             target_endpoints=endpoints,
             expected_traffic=f"approximately {concurrency} concurrent users" if vus_match else None,
             target_concurrency=concurrency,
+            max_concurrency=maximum,
             target_rps=target_rps,
             duration_seconds=duration,
             slos=SLOs(latency_p95_ms=latency, error_rate=error_rate),
@@ -88,7 +98,8 @@ class DeterministicIntentCompiler:
 
     @staticmethod
     def _duration(text: str) -> int | None:
-        match = _DURATION.search(text)
+        duration_phrase = re.search(r'\bfor\s+(.+)', text, re.IGNORECASE)
+        match = _DURATION.search(duration_phrase.group(1) if duration_phrase else text)
         if not match:
             return None
         value = float(match.group("value"))

@@ -9,6 +9,7 @@ import { RunTimeline } from './components/RunTimeline'
 import { RunsTable } from './components/RunsTable'
 import { Sidebar } from './components/Sidebar'
 import { WorkspaceSection } from './components/WorkspaceSection'
+import { DemoEvidence } from './components/DemoEvidence'
 import type { Investigation, Plan, Run } from './types'
 import './styles.css'
 
@@ -25,19 +26,20 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       const data = await api.runs(); setRuns(data)
+      setError('')
       const target = selected?.id ?? data[0]?.id
       if (target) { const detail = await api.run(target); setSelected(detail.run); setPlan(detail.plan); setInvestigation(detail.investigation) }
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
   }, [selected?.id])
   useEffect(() => { void load() }, [load])
+  useEffect(() => { const timer = window.setInterval(() => void load(), 1500); return () => window.clearInterval(timer) }, [load])
 
   async function choose(id: string) { const detail = await api.run(id); setSelected(detail.run); setPlan(detail.plan); setInvestigation(detail.investigation); setActive('Dashboard') }
   function navigate(item: string) { if (item === 'New test') setDialog(true); else setActive(item) }
-  async function cancel() { if (selected) { await api.cancel(selected.id, 'Stopped from live run view'); await load() } }
+  async function cancel() { if (selected) { try { await api.cancel(selected.id, 'Stopped from live run view'); await load() } catch (reason) { setError(String(reason)) } } }
   async function start() {
     if (!selected) return
     setStarting(true); setError('')
-    setSelected((current) => current ? { ...current, state: 'RUNNING', started_at: new Date().toISOString() } : current)
     try { await api.start(selected.id); await load() }
     catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
     finally { setStarting(false) }
@@ -47,7 +49,8 @@ export default function App() {
     <Sidebar active={active} onNavigate={navigate} />
     <main>
       <header className="topbar"><div><span>Workspace</span><strong>{active}</strong></div><div className="top-actions"><button className="icon-button" onClick={() => void load()} aria-label="Refresh"><RefreshCw size={17} /></button><button className="button primary" onClick={() => setDialog(true)}><Plus size={17} />New test</button></div></header>
-      {error && <div className="global-error">API unavailable: {error}</div>}
+      {error && <div className="global-error">{error}</div>}
+      {selected?.error && <div className="global-error">Run {selected.state.toLowerCase()}: {selected.error}</div>}
       {active !== 'Dashboard' && active !== 'New test' ? <WorkspaceSection section={active as 'Runs' | 'Experiments' | 'Baselines' | 'Incidents' | 'Audit'} runs={runs} selected={selected?.id} onSelect={(id) => void choose(id)} /> : selected && plan ? <div className="workspace-content">
         <div className="run-heading"><div><span className="crumb">Runs / {selected.id.slice(0, 8)}</span><h1>{plan.test_type.toLowerCase()} performance run</h1><p>Validated plan · {selected.execution_backend.toLowerCase()} backend · created {new Date(selected.created_at).toLocaleTimeString()}</p></div>
           <div className="run-actions">
@@ -57,7 +60,9 @@ export default function App() {
         </div>
         <Lifecycle state={selected.state} />
         <MetricStrip run={selected} />
+        <p className="mode-note">{selected.ai_mode === 'provider' ? 'AI provider connected' : 'Offline mode: deterministic intent parsing and analysis'}{selected.slo_passed !== null && selected.slo_passed !== undefined ? ` · Performance limits ${selected.slo_passed ? 'passed' : 'breached'}` : ''}</p>
         <div className="primary-grid"><RunTimeline run={selected} plan={plan} /><EvidenceRail run={selected} plan={plan} investigation={investigation} /></div>
+        <DemoEvidence run={selected} onSelect={(id) => void choose(id)} />
         <RunsTable runs={runs} selected={selected.id} onSelect={(id) => void choose(id)} />
       </div> : <div className="empty-workspace"><div className="pulse-mark"><span /></div><h1>Bring a real workload into focus</h1><p>Describe the performance requirement and provide an application schema. LoadPilot will compile a reviewable plan before any traffic is sent.</p><button className="button primary" onClick={() => setDialog(true)}><Plus size={18} />Create first test</button><div className="empty-steps"><span>01 Intent</span><span>02 Discover</span><span>03 Plan</span><span>04 Execute</span><span>05 Analyze</span></div></div>}
     </main>

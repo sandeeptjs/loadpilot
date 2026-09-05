@@ -21,10 +21,13 @@ class ResultAnalyzer:
         values = sorted(stages, key=lambda item: item.vus)
         latency_slo = self._threshold(plan, "http_req_duration", "p(95)<")
         error_slo = self._threshold(plan, "http_req_failed", "rate<")
+        if not values or (latency_slo is None and error_slo is None):
+            return Investigation(run_id=run_id, summary='No measured plateau capacity assessment is available.' if not values else 'No SLOs were configured; capacity is unassessed.', confidence=0, limitations=['Capacity requires measured hold stages and explicit performance limits.'])
         stable = [s for s in values if (latency_slo is None or s.p95_ms < latency_slo) and (error_slo is None or s.error_rate < error_slo)]
         failing = [s for s in values if s not in stable]
-        max_stable = stable[-1] if stable else None
         first_failure = failing[0] if failing else None
+        stable_before_failure = [s for s in stable if first_failure is None or s.vus < first_failure.vus]
+        max_stable = stable_before_failure[-1] if stable_before_failure else None
         evidence: list[str] = []
         if max_stable:
             evidence.append(f"{max_stable.vus} VUs: p95 {max_stable.p95_ms:g} ms, errors {max_stable.error_rate * 100:.2f}%, {max_stable.rps:g} RPS")
@@ -52,6 +55,9 @@ class ResultAnalyzer:
         pool = peak.metrics.get("db_pool_utilization", 0)
         wait = peak.metrics.get("db_wait_ms", 0)
         cpu = peak.metrics.get("app_cpu_utilization")
+        saturation = peak.metrics.get('db_pool_saturation_events', 0)
+        if saturation > 0 and wait > 0:
+            return 'Modeled connection-pool contention', [f'{saturation:g} requests encountered a full modeled pool; mean wait was {wait:g} ms across the run.'], .7
         if pool >= .9 and wait > 0:
             evidence = [f"DB pool reached {pool * 100:.0f}% while average DB wait was {wait:g} ms."]
             confidence = .78
@@ -73,7 +79,8 @@ def compare_metrics(current: dict[str, float], baseline: dict[str, float]) -> di
         if metric not in baseline:
             continue
         old = baseline[metric]
-        delta_pct = ((value - old) / old * 100) if old else 0
-        worse_when_higher = metric not in {"throughput_rps", "max_stable_vus"}
-        output[metric] = {"baseline": old, "current": value, "delta_pct": delta_pct, "regression": delta_pct > 10 if worse_when_higher else delta_pct < -10}
+        delta_pct = ((value - old) / old * 100) if old else None
+        worse_when_higher = metric not in {"throughput_rps", "max_stable_vus", 'http_reqs.rate'}
+        regression = (value > 0 if worse_when_higher else False) if old == 0 else (delta_pct > 10 if worse_when_higher else delta_pct < -10)
+        output[metric] = {"baseline": old, "current": value, "delta_pct": delta_pct, "regression": regression}
     return output

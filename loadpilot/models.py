@@ -75,6 +75,7 @@ class PerformanceTestIntent(StrictModel):
     target_endpoints: list[str] = Field(default_factory=list)
     expected_traffic: str | None = None
     target_concurrency: int | None = Field(default=None, gt=0)
+    max_concurrency: int | None = Field(default=None, gt=0)
     target_rps: float | None = Field(default=None, gt=0)
     duration_seconds: int | None = Field(default=None, gt=0)
     slos: SLOs = Field(default_factory=SLOs)
@@ -146,6 +147,7 @@ class LoadStage(StrictModel):
     duration_seconds: int = Field(gt=0)
     target_vus: int | None = Field(default=None, ge=0)
     target_rps: float | None = Field(default=None, ge=0)
+    measurement: bool = True
 
     @model_validator(mode="after")
     def has_target(self) -> LoadStage:
@@ -167,6 +169,7 @@ class ExecutionPlan(StrictModel):
     timeout_seconds: int = Field(default=3600, ge=1)
     environment: dict[str, str] = Field(default_factory=dict)
     secret_references: dict[str, SecretReference] = Field(default_factory=dict)
+    max_vus: int = Field(default=100, ge=1)
 
 
 class PerformanceTestPlan(StrictModel):
@@ -215,6 +218,11 @@ class TestRun(StrictModel):
     telemetry_window: TelemetryWindow | None = None
     error: str | None = None
     cancellation_reason: str | None = None
+    parent_run_id: UUID | None = None
+    slo_passed: bool | None = None
+    ai_mode: Literal['offline', 'provider'] = 'offline'
+    warnings: list[str] = Field(default_factory=list)
+    auto_followup: bool = False
 
 
 class MetricPoint(StrictModel):
@@ -265,6 +273,9 @@ class Investigation(StrictModel):
     confidence: float = Field(ge=0, le=1)
     recommended_next_experiment: str | None = None
     potential_remediation: list[str] = Field(default_factory=list)
+    ai_summary: str | None = None
+    ai_evidence_ids: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
 
 
 class ExperimentBudget(StrictModel):

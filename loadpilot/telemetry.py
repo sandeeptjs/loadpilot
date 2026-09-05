@@ -25,30 +25,37 @@ class PrometheusClient:
 
 class AlertCorrelator:
     def correlate(self, alerts: Iterable[Alert], *, run_start: datetime, run_end: datetime, dependency_edges: Iterable[tuple[str, str]] = ()) -> list[CorrelatedIncident]:
-        graph: dict[str, set[str]] = defaultdict(set)
+        graph = defaultdict(set)
         for left, right in dependency_edges:
             graph[left].add(right)
             graph[right].add(left)
-        relevant = [a for a in alerts if a.starts_at <= run_end and (a.ends_at is None or a.ends_at >= run_start)]
-        groups: dict[tuple[str, str], list[Alert]] = defaultdict(list)
-        for alert in relevant:
-            service = alert.labels.get("service") or alert.labels.get("app") or "unknown"
-            resource = alert.labels.get("pod") or alert.labels.get("instance") or alert.labels.get("database") or service
-            groups[(service, resource)].append(alert)
-        incidents: list[CorrelatedIncident] = []
-        consumed: set[tuple[str, str]] = set()
-        for key, grouped in groups.items():
-            if key in consumed:
+        groups = defaultdict(list)
+        seen = set()
+        for alert in alerts:
+            if alert.starts_at > run_end or (alert.ends_at is not None and alert.ends_at < run_start):
                 continue
-            service, resource = key
-            combined = list(grouped)
-            for linked in graph.get(service, set()):
-                for other_key, other in groups.items():
-                    if other_key[0] == linked:
-                        combined.extend(other)
-                        consumed.add(other_key)
-            consumed.add(key)
-            names = sorted({a.name for a in combined})
-            incidents.append(CorrelatedIncident(title=f"{service} degradation during test window", service=service, resource=resource, alerts=combined, signals=names))
+            labels = alert.labels
+            scope = (labels.get('environment', ''), labels.get('target', ''), labels.get('test_run_id', ''))
+            service = labels.get('service') or labels.get('app') or 'unknown'
+            resource = labels.get('pod') or labels.get('instance') or labels.get('database') or service
+            identity = (*scope, alert.fingerprint, service, resource)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            groups[(*scope, service, resource)].append(alert)
+        remaining = set(groups)
+        incidents = []
+        while remaining:
+            first = min(remaining)
+            remaining.remove(first)
+            queue, component = [first], [first]
+            while queue:
+                node = queue.pop()
+                connected = [other for other in sorted(remaining) if other[:3] == node[:3] and other[3] in graph[node[3]]]
+                for other in connected:
+                    remaining.remove(other)
+                    queue.append(other)
+                    component.append(other)
+            combined = [alert for key in component for alert in groups[key]]
+            incidents.append(CorrelatedIncident(title=f"{first[3]} degradation during test window", service=first[3], resource=first[4], alerts=combined, signals=sorted({alert.name for alert in combined})))
         return incidents
-

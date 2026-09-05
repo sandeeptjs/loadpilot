@@ -10,7 +10,7 @@ export function Sidebar({ active, onNavigate }: { active: string; onNavigate: (i
   return <aside className="sidebar">
     <div className="wordmark"><Gauge size={23} strokeWidth={2.2} />Load<span>Pilot</span></div>
     <nav aria-label="Primary navigation">
-      {items.map(([label, icon]) => <button key={label} className={active === label ? 'nav-item active' : 'nav-item'} onClick={() => onNavigate(label)}>
+      {items.map(([label, icon]) => <button aria-label={label} key={label} className={active === label ? 'nav-item active' : 'nav-item'} onClick={() => onNavigate(label)}>
         <Icon source={icon} /><span>{label}</span>
       </button>)}
     </nav>

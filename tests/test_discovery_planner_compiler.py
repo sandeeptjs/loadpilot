@@ -15,7 +15,7 @@ def test_openapi_links_become_journey_dependencies(checkout_openapi):
     assert [step.operation_id for step in plan.journeys[0].steps] == ["createCart", "checkout"]
     script = K6Compiler().compile(plan, app, run_id="run-1").content
     assert "ramping-vus" in script
-    assert "state[\"cart_id\"]" in script
+    assert 'createCart:cart_id' in script
     assert "TARGET_TOKEN" in script
     assert "p(95)<500" in script
 

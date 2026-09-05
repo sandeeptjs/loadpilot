@@ -1,5 +1,7 @@
 # Dependency and license plan
 
+The table below records the original integration inventory. The implemented demo additionally uses the unmodified [hypothesis-jsonschema library](https://github.com/python-jsonschema/hypothesis-jsonschema), MPL-2.0, and jsonschema for validated payload generation. Schemathesis and Temporal remain optional dependencies, not the primary runtime path. The API container now includes the unmodified k6 executable; release packaging must retain the upstream license and corresponding-source information. A release notice/SBOM bundle has not been produced in this task.
+
 | Repository | License inspected | Integration | Modified? | Distribution plan |
 |---|---|---|---:|---|
 | k6 Performance MCP | MIT | Ideas/reference only | No | No bundled source/runtime |

@@ -21,3 +21,9 @@ def test_soak_duration_is_parsed():
 def test_hyphenated_duration_is_parsed():
     intent = DeterministicIntentCompiler().compile("Stress checkout with 10 users for 20-second test.")
     assert intent.duration_seconds == 20
+
+
+def test_start_delay_is_not_the_test_duration():
+    intent = DeterministicIntentCompiler().compile('Start in 30 seconds. Run baseline products with 2 users for 5 minutes.')
+    assert intent.duration_seconds == 300
+    assert intent.schedule.run_at is not None
