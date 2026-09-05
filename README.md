@@ -50,3 +50,5 @@ The acceptance script launches isolated servers, generates real k6 traffic, exer
 The demo uses FastAPI, SQLite, React and a local k6 executable. The supplied API container also includes k6. Prometheus/Alertmanager/OTel/Grafana are optional Compose observability services, not required for the demo. Kubernetes and Temporal are not connected execution backends.
 
 See [demo script](docs/demo.md), [API examples](docs/backend-api.md), [architecture](docs/architecture.md), [acceptance evidence](docs/backend-acceptance.md), and [remaining gaps](docs/remaining-gaps.md).
+
+See [general HTTP scenarios](docs/scenarios.md) for model-generated or explicit journeys, preflight validation, budget controls and runnable ticket/search/GraphQL examples.

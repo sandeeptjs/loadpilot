@@ -76,6 +76,22 @@ class LocalK6Backend(ExecutionBackend):
         if code:
             raise ValueError(f"k6 inspect failed: {stderr[-2000:]}")
 
+    async def preflight(self, run, plan, script):
+        if "LOADPILOT_PREFLIGHT" not in script.read_text(encoding="utf-8"):
+            raise ValueError("Recreate this legacy run to enable bounded preflight validation")
+        environment = {key: value for key, value in os.environ.items() if key.upper() in {'PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'HOME', 'USERPROFILE'}}
+        for reference in plan.execution.secret_references.values():
+            value = os.environ.get(reference.key)
+            if not value:
+                raise ValueError(f'Missing configured execution secret: {reference.key}')
+            environment[reference.key] = value
+        for index, journey in enumerate(plan.journeys):
+            environment['LOADPILOT_PREFLIGHT'] = str(index)
+            environment['LOADPILOT_SUMMARY_PATH'] = str(script.with_suffix(f'.preflight-{index}.json').resolve())
+            code, _, _ = await self._run('run', '--quiet', str(script), timeout=65, env=environment, run_id=run.id)
+            if code:
+                raise ValueError(f'Preflight failed for journey {journey.name}: check credentials, extracted values, payload constraints and response assertions. Load was not started.')
+
     async def execute(self, run: TestRun, plan: PerformanceTestPlan, script: Path) -> ExecutionResult:
         # Do not forward provider keys, control tokens or unrelated target overrides to k6.
         environment = {key: value for key, value in os.environ.items() if key.upper() in {'PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'HOME', 'USERPROFILE'}}

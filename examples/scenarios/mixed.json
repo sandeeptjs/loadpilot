@@ -1,0 +1,115 @@
+{
+  "prompt": "Baseline with 1 user for 10 seconds. Keep p95 under 500 ms and errors under 1%.",
+  "source_type": "manual",
+  "source": [
+    {
+      "operation_id": "session",
+      "method": "POST",
+      "path": "/sessions"
+    },
+    {
+      "operation_id": "ticket",
+      "method": "POST",
+      "path": "/tickets"
+    },
+    {
+      "operation_id": "read",
+      "method": "GET",
+      "path": "/tickets/{id}"
+    },
+    {
+      "operation_id": "search",
+      "method": "GET",
+      "path": "/search",
+      "parameters": [
+        {
+          "name": "q",
+          "location": "query"
+        }
+      ]
+    },
+    {
+      "operation_id": "query",
+      "method": "POST",
+      "path": "/graphql"
+    }
+  ],
+  "base_url": "http://127.0.0.1:8090",
+  "journeys": [
+    {
+      "name": "support tickets",
+      "steps": [
+        {
+          "operation_id": "session",
+          "extract": {
+            "token": "/token"
+          }
+        },
+        {
+          "operation_id": "ticket",
+          "headers": {
+            "Authorization": "Bearer ${token}"
+          },
+          "body": {
+            "owner": {
+              "name": "Ada"
+            }
+          },
+          "expected_statuses": [
+            201
+          ],
+          "extract": {
+            "id": "/ticket/id"
+          }
+        },
+        {
+          "operation_id": "read",
+          "inputs": {
+            "id": "${id}"
+          },
+          "assertions": [
+            {
+              "pointer": "/status",
+              "equals": "open"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "catalog search",
+      "steps": [
+        {
+          "operation_id": "search",
+          "inputs": {
+            "q": "books"
+          },
+          "repeat": 2,
+          "assertions": [
+            {
+              "pointer": "/results/0",
+              "equals": "book"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "graphql health",
+      "steps": [
+        {
+          "operation_id": "query",
+          "body": {
+            "query": "query { health }"
+          },
+          "assertions": [
+            {
+              "pointer": "/data/health",
+              "equals": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

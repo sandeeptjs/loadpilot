@@ -63,7 +63,7 @@ class LoadPilotService:
             if isinstance(backend, LocalK6Backend):
                 backend.on_sample = self._record_sample
 
-    async def prepare(self, *, prompt: str, source_type: str, source, application_name: str, base_url: str | None = None, environment: str = "local", backend: ExecutionBackendType = ExecutionBackendType.LOCAL, validate: bool = False, intent_overrides: dict | None = None, credentials_reference: SecretReference | None = None, run_at: datetime | None = None, auto_start: bool = False, auto_followup: bool = False) -> TestRun:
+    async def prepare(self, *, prompt: str, source_type: str, source, application_name: str, base_url: str | None = None, environment: str = "local", backend: ExecutionBackendType = ExecutionBackendType.LOCAL, validate: bool = False, intent_overrides: dict | None = None, credentials_reference: SecretReference | None = None, run_at: datetime | None = None, auto_start: bool = False, auto_followup: bool = False, journeys=None) -> TestRun:
         run = self.store.create(TestRun(plan_id=uuid4(), execution_backend=backend, auto_followup=auto_followup))
         try:
             intent = self.intent_compiler.compile(prompt, environment=environment)
@@ -81,8 +81,11 @@ class LoadPilotService:
             if backend != ExecutionBackendType.LOCAL:
                 raise ValueError('Only local execution is currently qualified; it also runs inside the API container')
             if self.settings.ai_enabled:
-                parsed = await self.ai.parse(prompt, [{'id': e.operation_id, 'path': e.path, 'method': e.method} for e in application.endpoints])
-                updates = parsed.model_dump(exclude_none=True)
+                parsed = await self.ai.parse(prompt, [{'id': e.operation_id, 'path': e.path, 'method': e.method, 'summary': e.summary, 'parameters': [p.model_dump() for p in e.parameters], 'request_schema': e.request_schema, 'responses': e.response_schemas} for e in application.endpoints])
+                updates = parsed.model_dump(exclude_none=True, exclude={'journeys', 'required_inputs'})
+                if parsed.required_inputs and not journeys:
+                    raise ValueError('Scenario needs input: ' + '; '.join(parsed.required_inputs))
+                journeys = journeys or parsed.journeys
                 intent = PerformanceTestIntent.model_validate({**intent.model_dump(), **updates})
                 run = self.store.update(run.id, ai_mode='provider')
             else:
@@ -110,18 +113,21 @@ class LoadPilotService:
             run = self.store.transition(run.id, RunState.GENERATING_DATA)
             self._audit(run, "data.generated", {"application_id": str(application.id)}, {"strategy": "schema-first", "candidate_count": sum(len(e.examples) for e in application.endpoints)}, "Generate deterministic schema-conforming candidates")
             run = self.store.transition(run.id, RunState.PLANNING)
-            plan = self.planner.plan(intent, application, backend=backend)
+            plan = self.planner.plan(intent, application, backend=backend, journeys=journeys)
             if credentials_reference:
                 if credentials_reference.provider != 'env':
                     raise ValueError('Only env credential references are supported')
                 if not re.fullmatch(r'TARGET_[A-Z0-9_]+', credentials_reference.key):
                     raise ValueError('Execution secret references must use TARGET_ environment variables')
                 plan.execution.secret_references['TARGET_TOKEN'] = credentials_reference
+            import json
+            for reference in set(re.findall(r'env:(TARGET_[A-Z0-9_]+)', json.dumps([j.model_dump() for j in plan.journeys]))):
+                plan.execution.secret_references[reference] = SecretReference(key=reference)
             # Authenticated operations need a token binding or a supplied secret reference.
-            for step in plan.journeys[0].steps:
+            for step in [step for journey in plan.journeys for step in journey.steps]:
                 endpoint = next(e for e in application.endpoints if e.operation_id == step.operation_id)
                 bound_auth = any(d.consumer_operation_id == endpoint.operation_id and d.input_name == 'Authorization' for d in application.dependencies)
-                if endpoint.auth_schemes and not bound_auth and not credentials_reference:
+                if endpoint.auth_schemes and not bound_auth and not credentials_reference and not step.headers:
                     raise ValueError(f'Authentication for {endpoint.operation_id} requires a credential reference or login dependency')
             self.store.put_entity("plan", plan)
             run = self.store.save(run.model_copy(update={"plan_id": plan.id}))
@@ -188,6 +194,11 @@ class LoadPilotService:
                     return self.store.get(run.id)
                 run = self.store.transition(run.id, RunState.QUEUED)
             run = self.store.transition(run.id, RunState.INITIALIZING)
+            if isinstance(backend, LocalK6Backend):
+                await backend.preflight(run, plan, path)
+                self._audit(run, 'scenario.preflight', {}, {'journeys': len(plan.journeys)}, 'One iteration of each journey passed before applying load')
+                if self.store.get(run.id).state in TERMINAL:
+                    return self.store.get(run.id)
             run = self.store.transition(run.id, RunState.RUNNING)
             self._audit(run, 'test.started', {'backend': plan.execution.backend.value}, {}, 'Start the validated workload')
             telemetry_before = await self._target_metrics_snapshot(run.id)

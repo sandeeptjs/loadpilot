@@ -22,12 +22,16 @@ class TestPlanner:
     def __init__(self, settings: Settings | None = None):
         self.settings = settings
 
-    def plan(self, intent: PerformanceTestIntent, application: ApplicationModel, *, backend: ExecutionBackendType = ExecutionBackendType.LOCAL) -> PerformanceTestPlan:
-        target = intent.target_concurrency or 100
-        duration = intent.duration_seconds or 1200
+    def plan(self, intent: PerformanceTestIntent, application: ApplicationModel, *, backend: ExecutionBackendType = ExecutionBackendType.LOCAL, journeys=None) -> PerformanceTestPlan:
+        target = intent.target_concurrency or 1
+        duration = intent.duration_seconds or 30
         stages = self._stages(intent.test_type, target, duration, intent.max_concurrency)
-        selected = self._select_endpoints(intent, application)
+        selected = [] if journeys else self._select_endpoints(intent, application)
         steps = [JourneyStep(operation_id=e.operation_id, extract=self._extracts(e, application)) for e in selected]
+        if journeys:
+            from .scenarios import validate_journeys
+            journeys = validate_journeys(journeys, application)
+            steps = [step for journey in journeys for step in journey.steps]
         if not steps:
             raise ValueError("No target operations matched the intent")
         if intent.target_rps:
@@ -55,7 +59,7 @@ class TestPlanner:
             workload_model="open" if intent.target_rps else "closed",
             executor="ramping-arrival-rate" if intent.target_rps else "ramping-vus",
             stages=stages,
-            journeys=[UserJourney(name="primary", steps=steps)],
+            journeys=journeys or [UserJourney(name="primary", steps=steps)],
             thresholds=thresholds,
             payload_sources=["json-schema-validated-sample-pools", "runtime-dependency-values"],
             abort_conditions=['Execution timeout', 'Transport failure rate reaches 20% after 5 seconds'],
@@ -94,7 +98,7 @@ class TestPlanner:
             if not reads:
                 raise ValueError('Name the operation or journey to test; no read-only default operations exist')
             return reads
-        matches = [e for e in application.endpoints if any(term in (e.path + " " + e.operation_id + " " + " ".join(e.tags)).lower() for term in intent.target_endpoints)]
+        matches = [e for e in application.endpoints if any(term.lower() in (e.path + " " + e.operation_id + " " + " ".join(e.tags)).lower() for term in intent.target_endpoints)]
         if not matches:
             raise ValueError('No operations match the requested journey; supply an operation ID or endpoint')
         endpoints = {e.operation_id: e for e in application.endpoints}
