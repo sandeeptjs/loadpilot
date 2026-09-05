@@ -1,5 +1,20 @@
 # LoadPilot landing page
 
+## Appended circle section
+
+`circle.css` and `circle.js` style and animate only `#loadpilot-circle`, appended
+after the original page. The tilted ellipse, equal-distance spacing, depth
+scaling, foreground/background layering, and scroll acceleration are adapted
+from `SectionPartner` in the supplied `kononenkogroup.com.zip`. Capability labels
+replace the reference's customer logos. Motion pauses outside the viewport and
+honors reduced-motion preferences. The reference's font was absent from the ZIP
+and its host returned 403; this section uses a local Times serif fallback.
+
+The original portrait-gallery section is removed. Other existing landing markup
+is retained. The workspace uses a separate `workspace-theme.css` layer matching
+the existing landing page's black surfaces, white type, mint accent, and pill
+buttons; its test execution flow and layout are retained.
+
 This page adapts the HTML, CSS, artwork, and animation bundle in the user-supplied
 `hobro.digital.zip`. It is not a new design or a React recreation. The original
 section layout and animation selectors are retained; branding, text, metadata,
