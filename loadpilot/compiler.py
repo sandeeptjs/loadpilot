@@ -16,7 +16,7 @@ import exec from 'k6/execution';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = {{ base_url }}.replace(/\/+$/, '');
-const definitions = {{ steps }};
+const journeys = {{ steps }};
 const plannedStages = {{ instrumented_stages }}.map(stage => ({
   ...stage,
   durationMetric: new Trend(`loadpilot_stage_${stage.suffix}_duration`, true),
@@ -25,23 +25,59 @@ const plannedStages = {{ instrumented_stages }}.map(stage => ({
 }));
 const journeyFailed = new Rate('loadpilot_journey_failed');
 const transportFailed = new Rate('loadpilot_transport_failed');
-export const options = {{ options }};
+export const options = __ENV.LOADPILOT_PREFLIGHT !== undefined ? {
+  scenarios: { preflight: { executor: 'shared-iterations', vus: 1, iterations: 1, maxDuration: '60s' } },
+  thresholds: { loadpilot_journey_failed: ['rate==0'], checks: ['rate==1'] },
+} : {{ options }};
+
+function pointer(value, path) {
+  return path.split('/').slice(1).reduce((v, k) => v?.[k.replace(/~1/g, '/').replace(/~0/g, '~')], value);
+}
+function resolve(value, state) {
+  if (Array.isArray(value)) return value.map(v => resolve(v, state));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k,v]) => [k, resolve(v,state)]));
+  if (typeof value !== 'string') return value;
+  if (value.startsWith('env:TARGET_')) {
+    const secret = __ENV[value.slice(4)];
+    if (!secret) throw new Error('Missing target credential reference');
+    return secret;
+  }
+  const exact = value.match(/^\$\{([^}]+)\}$/);
+  if (exact) {
+    if (state[exact[1]] === undefined) throw new Error('Missing scenario variable');
+    return state[exact[1]];
+  }
+  return value.replace(/\$\{([^}]+)\}/g, (_, key) => {
+    if (state[key] === undefined) throw new Error('Missing scenario variable');
+    return String(state[key]);
+  });
+}
 
 function failJourney() { journeyFailed.add(true); sleep(0.5); }
 
 export default function () {
   const state = {};
-  for (const step of definitions) {
+  let selected;
+  if (__ENV.LOADPILOT_PREFLIGHT !== undefined) selected = journeys[Number(__ENV.LOADPILOT_PREFLIGHT)];
+  else {
+    let ticket = Math.random() * journeys.reduce((sum,j) => sum + j.weight, 0);
+    selected = journeys.find(j => (ticket -= j.weight) < 0) || journeys[journeys.length - 1];
+  }
+  try {
+  for (const step of selected.steps) {
+   for (let repetition = 0; repetition < step.repeat; repetition++) {
     const stageAtStart = currentStage();
     let payload = step.payloads.length ? JSON.parse(JSON.stringify(step.payloads[(__VU + __ITER) % step.payloads.length])) : null;
-    const headers = { 'Content-Type': 'application/json', 'X-LoadPilot-Run': {{ run_id }} };
+    const headers = { 'Content-Type': step.contentType, 'X-LoadPilot-Run': {{ run_id }} };
     for (const [name, reference] of Object.entries(step.secrets)) {
       if (!__ENV[reference]) { failJourney(); return; }
       if (name === 'TARGET_TOKEN') headers.Authorization = `Bearer ${__ENV[reference]}`;
-      else headers[name] = __ENV[reference];
+      else if (!name.startsWith('TARGET_')) headers[name] = __ENV[reference];
     }
     if (__ENV.TARGET_TOKEN) headers.Authorization = `Bearer ${__ENV.TARGET_TOKEN}`;
-    const inputs = {};
+    if (step.body !== null) payload = resolve(step.body, state);
+    Object.assign(headers, resolve(step.headers, state));
+    const inputs = resolve(step.inputs, state);
     for (const binding of step.bindings) {
       const value = state[binding.stateKey];
       if (value === undefined || value === null) { failJourney(); return; }
@@ -54,17 +90,20 @@ export default function () {
       const value = inputs[parameter.name] ?? parameter.example;
       if (parameter.location === 'path') path = path.replace(`{${parameter.name}}`, encodeURIComponent(value));
       if (parameter.location === 'header' && parameter.name.toLowerCase() !== 'authorization') headers[parameter.name] = String(value);
+      if (value === undefined || value === null) continue;
+      if (parameter.location === 'cookie') headers.Cookie = (headers.Cookie ? headers.Cookie + '; ' : '') + `${parameter.name}=${encodeURIComponent(value)}`;
       if (parameter.location === 'query') path += `${path.includes('?') ? '&' : '?'}${encodeURIComponent(parameter.name)}=${encodeURIComponent(value)}`;
     }
     path = path.replace(/\{([^}]+)\}/g, (_, name) => {
       if (inputs[name] === undefined) throw new Error(`Missing runtime path binding: ${name}`);
       return encodeURIComponent(inputs[name]);
     });
-    const response = http.request(step.method, BASE_URL + path, payload === null ? null : JSON.stringify(payload), {
+    const response = http.request(step.method, BASE_URL + path, payload === null ? null : step.contentType === 'application/json' ? JSON.stringify(payload) : step.contentType === 'text/plain' ? String(payload) : payload, {
       headers, timeout: '10s', redirects: 0,
-      tags: { operation_id: step.id, stage: stageAtStart.name },
+      responseCallback: step.statuses.length ? http.expectedStatuses(...step.statuses) : http.expectedStatuses({min: 200, max: 399}),
+      tags: { operation_id: step.id, journey: selected.name, stage: stageAtStart.name },
     });
-    const ok = check(response, { 'operation succeeded': r => r.status >= 200 && r.status < 400 });
+    const ok = check(response, { [step.id + ' succeeded']: r => (step.statuses.length ? step.statuses.includes(r.status) : r.status >= 200 && r.status < 400) && step.assertions.every(a => { try { return JSON.stringify(pointer(r.json(), a.pointer)) === JSON.stringify(resolve(a.equals, state)); } catch (_) { return false; } }) });
     transportFailed.add(response.status === 0);
     // Boundary-crossing requests are excluded from plateau capacity estimates.
     if (stageAtStart === currentStage()) {
@@ -80,9 +119,11 @@ export default function () {
         state[extraction.stateKey] = value;
       } catch (_) { failJourney(); return; }
     }
-    if (step.think > 0) sleep(step.think);
+    if (step.think > 0 && __ENV.LOADPILOT_PREFLIGHT === undefined) sleep(step.think);
+   }
   }
   journeyFailed.add(false);
+  } catch (_) { failJourney(); }
 }
 
 function currentStage() {
@@ -96,7 +137,7 @@ function currentStage() {
 }
 
 export function handleSummary(data) {
-  return { [__ENV.LOADPILOT_SUMMARY_PATH || 'stdout']: JSON.stringify({ metrics: data.metrics, state: data.state }) };
+  return { [__ENV.LOADPILOT_SUMMARY_PATH || 'stdout']: JSON.stringify({ metrics: data.metrics, state: data.state, checks: data.root_group }) };
 }
 '''
 
@@ -113,14 +154,15 @@ class K6Compiler:
 
     def compile(self, plan: PerformanceTestPlan, application: ApplicationModel, *, run_id='pending'):
         endpoints = {e.operation_id: e for e in application.endpoints}
-        steps = []
+        journeys = []
         for journey in plan.journeys:
+            steps = []
             for step in journey.steps:
                 endpoint = endpoints[step.operation_id]
                 if not endpoint.path.startswith('/') or endpoint.path.startswith('//'):
                     raise ValueError('Operation paths must be absolute paths on the allowed target, not URLs')
                 bindings, extractions = [], []
-                for dependency in application.dependencies:
+                for dependency in application.dependencies if journey.infer_dependencies else []:
                     key = dependency.producer_operation_id + ':' + dependency.input_name
                     if not dependency.output_expression.startswith('$response.body#/'):
                         raise ValueError('Only response JSON-pointer dependency expressions are supported')
@@ -128,13 +170,17 @@ class K6Compiler:
                         bindings.append({'name': dependency.input_name, 'stateKey': key})
                     if dependency.producer_operation_id == endpoint.operation_id:
                         extractions.append({'stateKey': key, 'path': dependency.output_expression.removeprefix('$response.body#')})
+                extractions.extend({'stateKey': key, 'path': pointer} for key, pointer in step.extract.items() if pointer.startswith('/'))
                 steps.append({
+                    'inputs': step.inputs, 'headers': step.headers, 'body': step.body,
+                    'statuses': step.expected_statuses, 'assertions': [a.model_dump() for a in step.assertions], 'repeat': step.repeat,
                     'id': endpoint.operation_id, 'method': endpoint.method, 'path': endpoint.path,
-                    'payloads': endpoint.examples, 'bindings': bindings, 'extracts': extractions,
-                    'parameters': [p.model_dump() for p in endpoint.parameters if p.required or p.location == 'path'],
+                    'contentType': endpoint.content_type, 'payloads': endpoint.examples, 'bindings': bindings, 'extracts': extractions,
+                    'parameters': [p.model_dump() for p in endpoint.parameters if p.required or p.location == 'path' or p.name in step.inputs],
                     'secrets': {name: reference.key for name, reference in plan.execution.secret_references.items()},
                     'think': step.think_time_seconds if plan.workload_model == 'closed' else 0,
                 })
+            journeys.append({'name': journey.name, 'weight': journey.weight, 'steps': steps})
         stages = [{'duration': f'{stage.duration_seconds}s', 'target': round(stage.target_rps if stage.target_rps is not None else stage.target_vus or 0)} for stage in plan.stages]
         scenario = {'executor': plan.executor, 'stages': stages, 'gracefulStop': '5s'}
         if plan.workload_model == 'open':
@@ -149,7 +195,7 @@ class K6Compiler:
         options = {'scenarios': {'primary': scenario}, 'thresholds': thresholds, 'summaryTrendStats': ['avg', 'min', 'max', 'p(95)', 'p(99)'], 'tags': {'test_run_id': run_id, 'plan_id': str(plan.id)}, 'maxRedirects': 0}
         content = self.environment.from_string(_TEMPLATE).render(
             base_url=json.dumps(str(application.base_url)), run_id=json.dumps(run_id),
-            steps=json.dumps(steps), options=json.dumps(options),
+            steps=json.dumps(journeys), options=json.dumps(options),
             instrumented_stages=json.dumps([{'name': s.name, 'suffix': re.sub(r'[^a-zA-Z0-9]+', '_', s.name).strip('_').lower(), 'duration': s.duration_seconds} for s in plan.stages]),
         )
         return CompiledScript(content, hashlib.sha256(content.encode()).hexdigest())

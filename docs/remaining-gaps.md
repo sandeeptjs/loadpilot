@@ -1,7 +1,7 @@
 # Remaining gaps
 
 - A credentialed OpenAI-compatible provider run has not been performed. The JSON contract, refusal/invalid-output handling, and evidence-ID rejection have automated tests. Offline mode is labeled.
-- OpenAPI and manual HTTP definitions are the qualified input path. GraphQL, Postman and HAR adapters are incomplete and are not a claim of broad application support. Complex recursive schemas, multipart bodies, OAuth refresh flows and arbitrary business dependencies need more adapters.
+- OpenAPI and manual HTTP definitions support explicit ordered journeys and JSON/form/text bodies. GraphQL documents pass real HTTP acceptance; introspection alone is rejected. Postman raw-JSON and HAR imports preserve request inputs but do not execute collection scripts or arbitrary variables. Complex recursive schemas, multipart bodies, OAuth refresh flows, conditional branching and automatic business-rule repair remain unsupported. See scenarios.md for the precise contract.
 - Payload pools are schema-valid synthetic data, not production traffic distributions. Runtime IDs require explicit or supported inferred dependency links.
 - One-time schedules and relative delays are implemented. Cron recurrence, timezone interpretation of phrases such as tomorrow midnight, and resumable long-running workflows are not.
 - Kubernetes execution and standalone Docker backend execution deliberately reject unsupported runs instead of reporting success from an empty result. The API container embeds local k6; Docker/Compose has not been executed on this host.

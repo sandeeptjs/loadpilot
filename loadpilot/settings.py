@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     llm_api_key: str = ''
     llm_timeout: int = Field(default=45, ge=1, le=120)
     llm_json_mode: bool = True
+    llm_max_tokens: int = Field(default=2500, ge=256, le=8000)
 
     @property
     def ai_enabled(self):

@@ -1,0 +1,32 @@
+{
+  "prompt": "Baseline with 1 user for 10 seconds. Keep p95 under 500 ms and errors under 1%.",
+  "source_type": "graphql",
+  "source": {
+    "operations": [
+      {
+        "name": "query",
+        "query": "query { health }"
+      }
+    ]
+  },
+  "base_url": "http://127.0.0.1:8090",
+  "journeys": [
+    {
+      "name": "graphql health",
+      "steps": [
+        {
+          "operation_id": "query",
+          "body": {
+            "query": "query { health }"
+          },
+          "assertions": [
+            {
+              "pointer": "/data/health",
+              "equals": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

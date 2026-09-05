@@ -102,6 +102,7 @@ class Endpoint(StrictModel):
     path: str
     summary: str | None = None
     parameters: list[Parameter] = Field(default_factory=list)
+    content_type: Literal['application/json', 'application/x-www-form-urlencoded', 'text/plain'] = 'application/json'
     request_schema: dict[str, Any] | None = None
     response_schemas: dict[str, dict[str, Any]] = Field(default_factory=dict)
     auth_schemes: list[str] = Field(default_factory=list)
@@ -130,16 +131,28 @@ class ApplicationModel(StrictModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class ResponseAssertion(StrictModel):
+    pointer: str = Field(pattern=r"^/")
+    equals: Any
+
+
 class JourneyStep(StrictModel):
     operation_id: str
+    inputs: dict[str, Any] = Field(default_factory=dict)
+    headers: dict[str, str] = Field(default_factory=dict)
+    body: Any = None
+    expected_statuses: list[int] = Field(default_factory=list, max_length=20)
+    assertions: list[ResponseAssertion] = Field(default_factory=list, max_length=20)
+    repeat: int = Field(default=1, ge=1, le=10)
     extract: dict[str, str] = Field(default_factory=dict)
     think_time_seconds: float = Field(default=0.5, ge=0, le=60)
 
 
 class UserJourney(StrictModel):
+    infer_dependencies: bool = True
     name: str
     weight: float = Field(default=1, gt=0)
-    steps: list[JourneyStep] = Field(min_length=1)
+    steps: list[JourneyStep] = Field(min_length=1, max_length=30)
 
 
 class LoadStage(StrictModel):

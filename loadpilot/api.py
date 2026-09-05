@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .analysis import compare_metrics
 from .audit import audit_event, redact
 from .lifecycle import RunStore
-from .models import Alert, AlertBatch, ExecutionBackendType, SecretReference, StrictModel, utcnow
+from .models import Alert, AlertBatch, ExecutionBackendType, SecretReference, StrictModel, UserJourney, utcnow
 from .remediation import PoolAction, Remediator
 from .reports import Report
 from .service import LoadPilotService
@@ -44,6 +44,7 @@ class CreateTestRequest(BaseModel):
     run_at: datetime | None = None
     auto_start: bool = False
     auto_followup: bool = False
+    journeys: list[UserJourney] | None = Field(default=None, min_length=1, max_length=10)
 
 
 class CancelRequest(StrictModel):
@@ -98,7 +99,7 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
 
     @app.get('/api/capabilities')
     def capabilities():
-        return {'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
+        return {'scenario_features': ['ordered steps', 'nested JSON bindings', 'response assertions', 'weighted journeys', 'bounded repetition', 'preflight before load', 'JSON/form/text requests', 'environment credential references'], 'scenario_sources': ['openapi', 'manual', 'har', 'postman', 'graphql documents'], 'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
 
     @app.post('/api/tests', status_code=201)
     async def create_test(request: CreateTestRequest):

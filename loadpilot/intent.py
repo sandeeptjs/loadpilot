@@ -37,7 +37,7 @@ class DeterministicIntentCompiler:
 
         duration = self._duration(text)
         if duration is None:
-            duration = {TestType.SOAK: 7200, TestType.BASELINE: 600}.get(test_type, 1200)
+            duration = 30
             inferred["duration_seconds"] = duration
 
         vus_match = _VUS.search(text)
@@ -47,7 +47,7 @@ class DeterministicIntentCompiler:
         if load_range:
             concurrency, maximum = map(int, load_range.groups())
         if concurrency is None:
-            concurrency = 100
+            concurrency = 1
             inferred["target_concurrency"] = concurrency
 
         rps_match = _RPS.search(text)
