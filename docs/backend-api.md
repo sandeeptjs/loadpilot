@@ -58,3 +58,7 @@ Zero baselines produce null percentage deltas rather than division errors or fal
 `GET /api/remediations` returns records and verification IDs. `POST /api/remediations/{action_id}/rollback` restores the previous pool size only if the sandbox still has the value written by that action. Work must be drained first.
 
 No generic shell, kubectl, arbitrary URL mutation or arbitrary configuration endpoint is exposed to the model.
+
+## Local workflow management
+
+See [local backend acceptance](local-backend.md) for saved definitions, immutable revisions, corrected recovery, preflight diagnostics, readiness, optional API authentication and backups. These routes are also described by `/docs`.

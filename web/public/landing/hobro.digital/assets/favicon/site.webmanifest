@@ -1,0 +1,20 @@
+{
+  "name": "Hobro Digital",
+  "short_name": "Hobro Digital",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#151515",
+  "icons": [
+    {
+      "src": "/assets/favicon/favicon92.png",
+      "sizes": "92x92",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/favicon/favicon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

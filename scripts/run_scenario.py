@@ -6,6 +6,8 @@ from pathlib import Path
 
 import httpx
 
+from loadpilot.settings import Settings
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -18,7 +20,9 @@ def main():
     if args.target:
         payload['base_url'] = args.target
     payload['auto_start'] = True
-    with httpx.Client(base_url=args.api, timeout=60) as client:
+    token = Settings().api_token
+    headers = {'Authorization': 'Bearer ' + token} if token else {}
+    with httpx.Client(base_url=args.api, timeout=60, headers=headers) as client:
         response = client.post('/api/tests', json=payload)
         response.raise_for_status()
         identifier = response.json()['id']

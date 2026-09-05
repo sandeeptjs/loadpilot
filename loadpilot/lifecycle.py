@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
 from uuid import UUID
@@ -36,10 +37,15 @@ class RunStore:
         self.lock = RLock()
         self._initialize()
 
+    @contextmanager
     def _connect(self):
         connection = sqlite3.connect(self.path, check_same_thread=False)
         connection.row_factory = sqlite3.Row
-        return connection
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def _initialize(self) -> None:
         with self._connect() as db:
@@ -81,12 +87,26 @@ class RunStore:
             db.commit()
         return run
 
+    def _mutate(self, run_id, transform):
+        with self.lock, self._connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT body FROM runs WHERE id=?', (str(run_id),)).fetchone()
+            if not row:
+                raise KeyError(str(run_id))
+            current = TestRun.model_validate_json(row['body'])
+            result = transform(current)
+            if current.state in TERMINAL and current.state != result.state:
+                raise InvalidTransition('A terminal run cannot be changed')
+            db.execute('UPDATE runs SET state=?,body=?,updated_at=? WHERE id=?', (result.state.value, result.model_dump_json(), utcnow().isoformat(), str(run_id)))
+            return result
+
     def update(self, run_id, **fields) -> TestRun:
-        with self.lock:
-            return self.save(self.get(run_id).model_copy(update=fields))
+        return self._mutate(run_id, lambda current: current.model_copy(update=fields))
 
     def enqueue(self, run_id, due: float) -> None:
         with self.lock, self._connect() as db:
+            if not db.execute('SELECT 1 FROM runs WHERE id=?', (str(run_id),)).fetchone():
+                raise KeyError(str(run_id))
             db.execute("INSERT INTO jobs(run_id,due,status) VALUES(?,?,'pending') ON CONFLICT(run_id) DO UPDATE SET due=excluded.due WHERE jobs.status='pending'", (str(run_id), due))
 
     def claim(self, owner: str, now: float):
@@ -100,6 +120,10 @@ class RunStore:
             row = db.execute("SELECT run_id FROM jobs WHERE status='pending' AND due<=? ORDER BY due LIMIT 1", (now,)).fetchone()
             if row:
                 db.execute("UPDATE jobs SET status='running',owner=?,heartbeat=? WHERE run_id=?", (owner, now, row['run_id']))
+                stored = db.execute('SELECT body FROM runs WHERE id=?', (row['run_id'],)).fetchone()
+                run = TestRun.model_validate_json(stored['body'])
+                run.claimed_at = utcnow()
+                db.execute('UPDATE runs SET body=? WHERE id=?', (run.model_dump_json(), row['run_id']))
                 return row['run_id']
         return None
 
@@ -136,8 +160,7 @@ class RunStore:
         return [{'id': row['id'], 'timestamp': row['timestamp'], 'metrics': json.loads(row['body'])} for row in rows]
 
     def transition(self, run_id: UUID | str, target: RunState, *, error: str | None = None, cancellation_reason: str | None = None) -> TestRun:
-        with self.lock:
-            run = self.get(run_id)
+        def apply(run):
             if target not in TRANSITIONS.get(run.state, set()):
                 raise InvalidTransition(f"{run.state.value} -> {target.value} is not allowed")
             update = {"state": target}
@@ -150,7 +173,8 @@ class RunStore:
                 update["error"] = error
             if cancellation_reason:
                 update["cancellation_reason"] = cancellation_reason
-            return self.save(run.model_copy(update=update))
+            return run.model_copy(update=update)
+        return self._mutate(run_id, apply)
 
     def append_audit(self, event: AuditEvent) -> None:
         with self.lock, self._connect() as db:

@@ -92,17 +92,20 @@ class Parameter(StrictModel):
     name: str
     location: Literal["path", "query", "header", "cookie", "body"]
     required: bool = False
+    style: Literal['form', 'simple', 'spaceDelimited', 'pipeDelimited', 'deepObject'] = 'form'
+    explode: bool = True
     schema_: dict[str, Any] = Field(default_factory=dict, alias="schema")
     example: Any = None
 
 
 class Endpoint(StrictModel):
+    base_url: HttpUrl | None = None
     operation_id: str
     method: str
     path: str
     summary: str | None = None
     parameters: list[Parameter] = Field(default_factory=list)
-    content_type: Literal['application/json', 'application/x-www-form-urlencoded', 'text/plain'] = 'application/json'
+    content_type: Literal['application/json', 'application/x-www-form-urlencoded', 'text/plain', 'multipart/form-data'] = 'application/json'
     request_schema: dict[str, Any] | None = None
     response_schemas: dict[str, dict[str, Any]] = Field(default_factory=dict)
     auth_schemes: list[str] = Field(default_factory=list)
@@ -136,7 +139,29 @@ class ResponseAssertion(StrictModel):
     equals: Any
 
 
+class StepCondition(StrictModel):
+    variable: str = Field(pattern=r'^[A-Za-z][A-Za-z0-9_]*$')
+    equals: Any
+
+
+class BasicAuth(StrictModel):
+    username: str = Field(pattern=r'^env:TARGET_[A-Z0-9_]+$')
+    password: str = Field(pattern=r'^env:TARGET_[A-Z0-9_]+$')
+
+
+class UploadPart(StrictModel):
+    filename: str = Field(min_length=1, max_length=200)
+    content: str = Field(max_length=65536)
+    content_type: str = Field(default='application/octet-stream', max_length=120)
+
+
 class JourneyStep(StrictModel):
+    files: dict[str, UploadPart] = Field(default_factory=dict, max_length=10)
+    when: StepCondition | None = None
+    until: ResponseAssertion | None = None
+    poll_interval_seconds: float = Field(default=1, ge=.1, le=30)
+    retries: int = Field(default=0, ge=0, le=3)
+    basic_auth: BasicAuth | None = None
     operation_id: str
     inputs: dict[str, Any] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
@@ -149,6 +174,7 @@ class JourneyStep(StrictModel):
 
 
 class UserJourney(StrictModel):
+    datasets: dict[str, list[Any]] = Field(default_factory=dict)
     infer_dependencies: bool = True
     name: str
     weight: float = Field(default=1, gt=0)
@@ -221,6 +247,7 @@ class TestRun(StrictModel):
     state: RunState = RunState.CREATED
     created_at: datetime = Field(default_factory=utcnow)
     scheduled_at: datetime | None = None
+    claimed_at: datetime | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
     execution_backend: ExecutionBackendType

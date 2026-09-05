@@ -66,7 +66,7 @@ class OpenAPIAdapter(ApplicationSourceAdapter):
                 parameters = [self._parameter(self._resolve_ref(p, source)) for p in path_parameters + operation.get("parameters", [])]
                 request_body = self._resolve_ref(operation.get('requestBody'), source) or {}
                 content = request_body.get('content', {})
-                content_type = next((kind for kind in ('application/json', 'application/x-www-form-urlencoded', 'text/plain') if kind in content), None)
+                content_type = next((kind for kind in ('application/json', 'application/x-www-form-urlencoded', 'text/plain', 'multipart/form-data') if kind in content), None)
                 if content and content_type is None:
                     raise ValueError(f'Unsupported request encoding for {op_id}; supply a JSON, form or text operation')
                 request_schema = self._resolve_ref(content[content_type].get('schema'), source) if content_type else self._request_schema(operation, source)
@@ -91,7 +91,7 @@ class OpenAPIAdapter(ApplicationSourceAdapter):
                 auth = [key for requirement in operation.get("security", source.get("security", [])) for key in requirement]
                 endpoints.append(Endpoint(
                     operation_id=op_id,
-                    method=method.upper(),
+                    method=method.upper(), base_url=(operation.get('servers') or path_item.get('servers') or [{}])[0].get('url'),
                     path=path,
                     summary=operation.get("summary"),
                     parameters=parameters,
@@ -130,7 +130,7 @@ class OpenAPIAdapter(ApplicationSourceAdapter):
     @staticmethod
     def _parameter(value: dict[str, Any]) -> Parameter:
         schema = value.get("schema", {})
-        return Parameter(name=value["name"], location=value["in"], required=value.get("required", False), schema=schema, example=value.get("example", generate_samples(schema, 1)[0]))
+        return Parameter(name=value["name"], location=value["in"], required=value.get("required", False), style=value.get("style", "form" if value["in"] in {"query", "cookie"} else "simple"), explode=value.get("explode", value["in"] in {"query", "cookie"}), schema=schema, example=value.get("example", generate_samples(schema, 1)[0]))
 
     @staticmethod
     def _content_schema(value: dict[str, Any]) -> dict[str, Any] | None:
@@ -213,7 +213,7 @@ class HARAdapter(ApplicationSourceAdapter):
 
 class ManualAdapter(ApplicationSourceAdapter):
     def adapt(self, source: list[dict[str, Any]], *, name: str, base_url: str | None = None) -> ApplicationModel:
-        endpoints = [Endpoint(operation_id=item.get("operation_id") or f"{item['method'].lower()}_{item['path'].strip('/').replace('/', '_')}", method=item["method"].upper(), path=item["path"], request_schema=item.get("request_schema"), content_type=item.get("content_type", "application/json"), parameters=item.get('parameters', []), examples=item.get('examples') or (generate_samples(item['request_schema']) if item.get('request_schema') else [])) for item in source]
+        endpoints = [Endpoint(operation_id=item.get("operation_id") or f"{item['method'].lower()}_{item['path'].strip('/').replace('/', '_')}", method=item["method"].upper(), path=item["path"], base_url=item.get("base_url"), request_schema=item.get("request_schema"), content_type=item.get("content_type", "application/json"), parameters=item.get('parameters', []), examples=item.get('examples') or (generate_samples(item['request_schema']) if item.get('request_schema') else [])) for item in source]
         return ApplicationModel(name=name, base_url=base_url, source_type="manual", source_fingerprint=_fingerprint(source), endpoints=endpoints)
 
 
