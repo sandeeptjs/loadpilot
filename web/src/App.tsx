@@ -12,6 +12,7 @@ import { WorkspaceSection } from './components/WorkspaceSection'
 import { DemoEvidence } from './components/DemoEvidence'
 import type { Investigation, Plan, Run } from './types'
 import './styles.css'
+import './workspace-theme.css'
 
 export default function App() {
   const [runs, setRuns] = useState<Run[]>([])
@@ -48,7 +49,7 @@ export default function App() {
   return <div className="app-shell">
     <Sidebar active={active} onNavigate={navigate} />
     <main>
-      <header className="topbar"><div><span>Workspace</span><strong>{active}</strong></div><div className="top-actions"><button className="icon-button" onClick={() => void load()} aria-label="Refresh"><RefreshCw size={17} /></button><button className="button primary" onClick={() => setDialog(true)}><Plus size={17} />New test</button></div></header>
+      <header className="topbar"><div><a className="mobile-home" href="/" aria-label="LoadPilot home">LP</a><span>LoadPilot /</span><strong>{active}</strong></div><div className="top-actions"><button className="icon-button" onClick={() => void load()} aria-label="Refresh"><RefreshCw size={17} /></button><button className="button primary" onClick={() => setDialog(true)}><Plus size={17} />New test</button></div></header>
       {error && <div className="global-error">{error}</div>}
       {selected?.error && <div className="global-error">Run {selected.state.toLowerCase()}: {selected.error}</div>}
       {active !== 'Dashboard' && active !== 'New test' ? <WorkspaceSection section={active as 'Runs' | 'Experiments' | 'Baselines' | 'Incidents' | 'Audit'} runs={runs} selected={selected?.id} onSelect={(id) => void choose(id)} /> : selected && plan ? <div className="workspace-content">
@@ -61,8 +62,7 @@ export default function App() {
         <Lifecycle state={selected.state} />
         <MetricStrip run={selected} />
         <p className="mode-note">{selected.ai_mode === 'provider' ? 'AI provider connected' : 'Offline mode: deterministic intent parsing and analysis'}{selected.slo_passed !== null && selected.slo_passed !== undefined ? ` · Performance limits ${selected.slo_passed ? 'passed' : 'breached'}` : ''}</p>
-        <div className="primary-grid"><RunTimeline run={selected} plan={plan} /><EvidenceRail run={selected} plan={plan} investigation={investigation} /></div>
-        <DemoEvidence run={selected} onSelect={(id) => void choose(id)} />
+        <div className="primary-grid"><div className="primary-main"><RunTimeline run={selected} plan={plan} /><DemoEvidence run={selected} onSelect={(id) => void choose(id)} /></div><EvidenceRail run={selected} plan={plan} investigation={investigation} /></div>
         <RunsTable runs={runs} selected={selected.id} onSelect={(id) => void choose(id)} />
       </div> : <div className="empty-workspace"><div className="pulse-mark"><span /></div><h1>Bring a real workload into focus</h1><p>Describe the performance requirement and provide an application schema. LoadPilot will compile a reviewable plan before any traffic is sent.</p><button className="button primary" onClick={() => setDialog(true)}><Plus size={18} />Create first test</button><div className="empty-steps"><span>01 Intent</span><span>02 Discover</span><span>03 Plan</span><span>04 Execute</span><span>05 Analyze</span></div></div>}
     </main>

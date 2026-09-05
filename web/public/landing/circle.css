@@ -1,0 +1,76 @@
+/* Only the appended reference section. No existing page or dashboard selectors. */
+.lp-orbit-section {
+  position: relative;
+  isolation: isolate;
+  background: #000;
+  color: #fff;
+  width: 100%;
+  overflow: hidden;
+}
+.lp-orbit-stage {
+  position: relative;
+  min-height: 100svh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0 90px;
+  overflow: hidden;
+}
+.lp-orbit-title {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 76%;
+  color: #fff;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: clamp(76px, min(9.1vw, 16svh), 190px);
+  line-height: .8166666667;
+  font-weight: 400;
+  letter-spacing: -.03em;
+  text-align: center;
+  pointer-events: none;
+}
+.lp-orbit-line { display: block; padding: .12em 0; margin: -.12em 0; overflow: clip; }
+.lp-orbit-line > span { display: block; will-change: transform; }
+.lp-orbit { position: absolute; inset: 0; pointer-events: none; }
+.lp-orbit-disc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(90px, 8.85vw, 178px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f8f8f8;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  box-shadow: inset 0 0 1.5vw #0002;
+  will-change: transform, opacity;
+}
+.lp-orbit-disc strong {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(14px, 1.55vw, 30px);
+  line-height: 1;
+  letter-spacing: -.055em;
+  font-weight: 600;
+}
+.lp-orbit-disc small { font: 400 clamp(9px, .65vw, 13px)/1.2 Arial, Helvetica, sans-serif; color: #555; }
+.lp-orbit-caption { position: absolute; left: 20px; right: 20px; bottom: 28px; z-index: 4; text-align: center; font: 400 12px/1.4 Arial, sans-serif; color: #aaa; }
+@media(max-width: 767px) {
+  .lp-orbit-stage { min-height: 700px; min-height: max(90svh, 650px); padding: 90px 0; }
+  .lp-orbit-title { max-width: 96%; font-size: clamp(52px, 11.9vw, 90px); line-height: .88; }
+  .lp-orbit-disc { width: 70px; gap: 4px; }
+  .lp-orbit-disc strong { font-size: 12px; }
+  .lp-orbit-disc small { font-size: 8px; }
+  .lp-orbit-disc:nth-child(even) { display: none; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .lp-orbit-line > span, .lp-orbit-disc { will-change: auto; }
+}

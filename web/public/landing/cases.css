@@ -1,0 +1,36 @@
+/*! LoadPilot - scenario examples (#projects) layout corrections.
+ *  Additive: only touches the .cases grid. Pairs with cases.js.
+ */
+
+/* Fallback: if cases.js armed the takeover but gsap never arrived, or the script
+   failed outright, the markup's baked-in closed --clip-* values would hide the
+   whole grid. Until the motion layer is live, ignore the clip entirely. */
+html:not(.lp-cases-armed) .cases__list .cases__asset--clip { clip-path: none; }
+
+/* The card box is a square (aspect-ratio: 1/1) but the media inside carries
+   min-height: calc(350rem / var(--fz-base)). On narrow columns that is taller
+   than the box, so overflow: hidden crops the clip off-centre. */
+.cases__asset .case__video,
+.cases__asset .cases__image { min-height: 100%; }
+
+/* One neutral, monochrome grade across every scenario clip - card grid and popup
+   galleries alike - so a clip with a colour cast can't break the set. */
+.cases__asset .case__video,
+.cases__asset .cases__image,
+.cases__latest .latest__video,
+.gallery__video,
+.gallery__image { filter: grayscale(1); }
+
+/* The editorial offsets are a percentage of the item's own height, while the space
+   that absorbs them is the row gap. Past roughly 2100px wide the items outgrow the
+   gap and rows collide, so cap each offset at the gap's own maximum. */
+@media (min-width: 768px) {
+  .cases__item--align-bottom { transform: translateY(clamp(0px, 24%, 8.6875rem)); }
+  .cases__item--align-center { transform: translateY(clamp(0px, 12%, 4.3125rem)); }
+}
+
+/* Reduced motion: no wipe, no loop. Static, fully open grid. */
+@media (prefers-reduced-motion: reduce) {
+  .cases__list .cases__asset--clip { clip-path: none; }
+  .cases__list .cases__name { opacity: 1; transform: none; }
+}

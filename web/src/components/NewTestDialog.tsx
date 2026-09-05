@@ -10,6 +10,7 @@ export function NewTestDialog({ onClose, onCreated }: { onClose: () => void; onC
   const [error, setError] = useState('')
   const [autoStart, setAutoStart] = useState(true)
   const [delay, setDelay] = useState(0)
+  const [preset, setPreset] = useState('Stress')
   useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then(data => setSchemaUrl(data.sandbox_openapi_url)).catch(() => {}) }, [])
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError('')
@@ -21,8 +22,8 @@ export function NewTestDialog({ onClose, onCreated }: { onClose: () => void; onC
   }
   return <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}><form className="dialog" onSubmit={submit} onMouseDown={(e) => e.stopPropagation()}>
     <header><div><h2>Define a performance test</h2><p>Generate the journey, payloads, workload, and validated k6 script.</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Close"><X /></button></header>
-    <div className="preset-row">{['Baseline', 'Stress', 'Soak'].map(kind => <button type="button" className="button secondary" key={kind} onClick={() => setPrompt(`${kind} checkout ${kind === 'Stress' ? 'from 5 to 40 users for 35 seconds' : kind === 'Soak' ? 'with 3 users for 60 seconds' : 'with 2 users for 10 seconds'}. Keep p95 under 500 ms and errors under 1%.`)}>{kind}</button>)}</div>
-    <label>Requirement<textarea rows={6} value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
+    <div className="preset-row" role="group" aria-label="Requirement presets">{['Baseline', 'Stress', 'Soak'].map(kind => <button type="button" className={preset === kind ? 'button secondary is-on' : 'button secondary'} aria-pressed={preset === kind} key={kind} onClick={() => { setPreset(kind); setPrompt(`${kind} checkout ${kind === 'Stress' ? 'from 5 to 40 users for 35 seconds' : kind === 'Soak' ? 'with 3 users for 60 seconds' : 'with 2 users for 10 seconds'}. Keep p95 under 500 ms and errors under 1%.`) }}>{kind}</button>)}</div>
+    <label>Requirement<textarea rows={6} value={prompt} onChange={(e) => { setPrompt(e.target.value); setPreset('') }} /></label>
     <label>OpenAPI URL<input value={schemaUrl} onChange={(e) => setSchemaUrl(e.target.value)} /></label>
     <label>Start delay in seconds, zero for now<input type="number" min="0" max="86400" value={delay} onChange={e => setDelay(Number(e.target.value))} /></label>
     <label className="checkbox-row"><input type="checkbox" checked={autoStart} onChange={e => setAutoStart(e.target.checked)} />Run automatically after validation</label>
