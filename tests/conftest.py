@@ -8,7 +8,7 @@ def checkout_openapi():
     return {
         "openapi": "3.0.3",
         "info": {"title": "Checkout Sandbox", "version": "1.0.0"},
-        "servers": [{"url": "http://target:8080"}],
+        "servers": [{"url": "http://localhost:8080"}],
         "paths": {
             "/login": {
                 "post": {

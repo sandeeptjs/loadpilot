@@ -7,7 +7,7 @@ function value(run: Run, key: string, suffix = '') {
 
 export function MetricStrip({ run }: { run: Run }) {
   const metrics = [
-    ['Virtual users', value(run, 'vus.max')],
+    [run.state === 'RUNNING' ? 'Active virtual users' : 'Peak virtual users', value(run, run.state === 'RUNNING' ? 'vus' : 'vus.max')],
     ['Requests', value(run, 'http_reqs.count')],
     ['p95 latency', value(run, 'http_req_duration.p(95)', ' ms')],
     ['Error rate', run.metrics['http_req_failed.rate'] === undefined ? '—' : `${(run.metrics['http_req_failed.rate'] * 100).toFixed(2)}%`],

@@ -1,24 +1,11 @@
 # Local development
 
-The minimal developer path is Python plus a locally installed k6. Docker Compose supplies the full service topology when Docker is available.
+Follow the README quick start. `uv sync --extra dev` installs the backend. `npm ci` and `npm run build` inside web build the dashboard. `scripts/install_k6.ps1` installs portable, checksum-verified k6 on Windows.
 
-```powershell
-uv sync --extra dev
-uv run pytest
-uv run uvicorn loadpilot.api:app --reload
-```
+Start the API alone with `uv run uvicorn loadpilot.api:app --host 127.0.0.1 --port 8000`. The compiled dashboard is served from web/dist. For Vite development, `npm run dev` proxies `/api` to the API.
 
-Open `http://localhost:8000`. Set `LOADPILOT_K6_BIN` if k6 is not on `PATH`. Use secret references such as `env:TARGET_TOKEN`; never place secret values in plans.
+Configuration lives in `.env` or environment variables. `.env` is ignored. The demo launcher creates a per-session sandbox control token.
 
-The sandbox target runs from `sandbox_target.app:app`. Its `/control` endpoint changes bounded degradation parameters for demonstrations.
+Run `uv run pytest`, `uv run ruff check .`, `npm run build` and `npm run lint`. The real-k6 transport test skips if the portable binary is absent. `uv run python scripts/demo_acceptance.py` launches isolated processes and writes timestamped measured artifacts.
 
-## Real local acceptance run
-
-Start the instrumented target, then invoke the acceptance runner with a real k6 executable:
-
-```powershell
-uv run uvicorn sandbox_target.app:app --port 8081
-uv run python scripts/acceptance_smoke.py --target http://127.0.0.1:8081 --k6 .tools/k6/k6-v2.1.0-windows-amd64/k6.exe --database artifacts/acceptance.db
-```
-
-The runner fetches the target's OpenAPI document, compiles and validates a k6 script, executes authenticated cart and checkout traffic, snapshots Prometheus exposition before and after the run, and persists the run plus investigation in SQLite.
+For a separate worker, set `LOADPILOT_EMBEDDED_WORKER=false` on the API and run `uv run python -m loadpilot.worker` against the same database and generated directory. Use one shared queue per target to avoid overlapping load experiments.

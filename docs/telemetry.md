@@ -1,8 +1,13 @@
-# Telemetry
+# Implemented telemetry
 
-- k6 uses Prometheus remote write with `test_run_id`, `plan_id`, `experiment_id`, `scenario`, `stage`, `service` and `environment` labels where supported.
-- The OTel Collector accepts OTLP from the platform/target, scrapes Prometheus endpoints, adds resource attributes, batches data and exports metrics to Prometheus. Production may add Loki/Tempo without changing the model.
-- Each run has a `TelemetryWindow` padded two minutes before and after execution by default.
-- Analysis queries latency histograms, request/error rate, iterations, VUs, dropped iterations, CPU, memory, restarts, queues, DB pools/waits, cache latency and GC, then aligns series by timestamp and stage.
-- Correlation keys are time overlap, environment, service, resource identity and dependency edges. AI sees grouped incidents and supporting series, not an unfiltered alert dump.
+Local k6 writes real JSON point records and an authoritative final summary. The backend records per-second snapshots in SQLite and samples the target's `/metrics` Prometheus exposition. The dashboard plots rolling p95, labeled as an estimate; final metrics come from k6.
 
+Measured hold stages exclude requests that cross a stage boundary. A hold needs at least five requests and must have completed before it contributes to capacity estimates. No SLO means no assessed stable capacity. Transport failures are counted separately, paced and subject to an early-abort threshold.
+
+The sandbox exposes modeled pool activity, size, waiting histograms, saturation-event counts, cache counters and deliberately retained memory. A saturation event is never converted into fabricated utilization. The result reports mean pool wait over the run and describes the bottleneck as modeled.
+
+Local alert rules evaluate measured samples. Reports distinguish received notifications, distinct fingerprints, duplicates, incidents and excluded unrelated notifications. Correlation scopes by target/run and environment, filters by run window, and uses connected service dependencies. Rule-derived alerts are labeled `local-measured-rule`. External alerts without reliable run/target identity do not enter run evidence.
+
+The Prometheus query adapter and optional Compose topology remain available for further integration. The local demo does not yet ingest full distributed logs, traces or Prometheus remote-write series.
+
+Reference: [k6 JSON output](https://grafana.com/docs/k6/latest/results-output/real-time/json/).

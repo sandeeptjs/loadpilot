@@ -2,6 +2,7 @@ from loadpilot.execution import ExecutionBackend, ExecutionResult
 from loadpilot.lifecycle import RunStore
 from loadpilot.models import ExecutionBackendType, RunState
 from loadpilot.service import LoadPilotService
+from loadpilot.settings import Settings
 
 
 class FakeK6Backend(ExecutionBackend):
@@ -18,7 +19,7 @@ class FakeK6Backend(ExecutionBackend):
 
 async def test_service_vertical_slice_is_audited(tmp_path, checkout_openapi):
     backend = FakeK6Backend()
-    service = LoadPilotService(store=RunStore(tmp_path / "runs.db"), generated_dir=tmp_path / "generated", backends={ExecutionBackendType.LOCAL: backend})
+    service = LoadPilotService(store=RunStore(tmp_path / "runs.db"), generated_dir=tmp_path / "generated", backends={ExecutionBackendType.LOCAL: backend}, settings=Settings(max_vus=2000))
     run = await service.prepare(prompt="Stress checkout from 150 VUs and find maximum load with p95 under 500 ms and errors under 1%", source_type="openapi", source=checkout_openapi, application_name="checkout", validate=True)
     assert run.state == RunState.QUEUED
     completed = await service.start(run.id)

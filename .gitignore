@@ -10,3 +10,7 @@ generated-tests/*.json
 artifacts/
 web/node_modules/
 web/dist/
+.env
+.hypothesis/
+*.db-shm
+*.db-wal

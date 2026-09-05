@@ -6,6 +6,8 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
+from .audit import redact
+from .data import generate_samples
 from .models import ApplicationModel, Endpoint, OperationDependency, Parameter
 
 
@@ -62,7 +64,7 @@ class OpenAPIAdapter(ApplicationSourceAdapter):
                 op_id = operation.get("operationId") or self._operation_id(method, path)
                 parameters = [self._parameter(p) for p in path_parameters + operation.get("parameters", []) if "$ref" not in p]
                 request_schema = self._request_schema(operation, source)
-                examples = [_schema_example(request_schema)] if request_schema else []
+                examples = generate_samples(request_schema) if request_schema else []
                 response_schemas: dict[str, dict[str, Any]] = {}
                 for status, response in operation.get("responses", {}).items():
                     schema = self._resolve_ref(self._content_schema(response), source)
@@ -122,7 +124,7 @@ class OpenAPIAdapter(ApplicationSourceAdapter):
     @staticmethod
     def _parameter(value: dict[str, Any]) -> Parameter:
         schema = value.get("schema", {})
-        return Parameter(name=value["name"], location=value["in"], required=value.get("required", False), schema=schema, example=value.get("example") or _schema_example(schema, value["name"]))
+        return Parameter(name=value["name"], location=value["in"], required=value.get("required", False), schema=schema, example=value.get("example", generate_samples(schema, 1)[0]))
 
     @staticmethod
     def _content_schema(value: dict[str, Any]) -> dict[str, Any] | None:
@@ -192,7 +194,7 @@ class HARAdapter(ApplicationSourceAdapter):
             example = None
             if body:
                 try:
-                    example = json.loads(body)
+                    example = redact(json.loads(body))
                 except json.JSONDecodeError:
                     example = None
             endpoints[key] = Endpoint(operation_id=f"{method.lower()}_{re.sub(r'[^a-zA-Z0-9]+', '_', path).strip('_')}", method=method, path=path, parameters=[Parameter(name=h["name"], location="header", example=h.get("value")) for h in headers], examples=[example] if example is not None else [])
@@ -201,7 +203,7 @@ class HARAdapter(ApplicationSourceAdapter):
 
 class ManualAdapter(ApplicationSourceAdapter):
     def adapt(self, source: list[dict[str, Any]], *, name: str, base_url: str | None = None) -> ApplicationModel:
-        endpoints = [Endpoint(operation_id=item.get("operation_id") or f"{item['method'].lower()}_{item['path'].strip('/').replace('/', '_')}", method=item["method"].upper(), path=item["path"], request_schema=item.get("request_schema"), examples=item.get("examples", [])) for item in source]
+        endpoints = [Endpoint(operation_id=item.get("operation_id") or f"{item['method'].lower()}_{item['path'].strip('/').replace('/', '_')}", method=item["method"].upper(), path=item["path"], request_schema=item.get("request_schema"), parameters=item.get('parameters', []), examples=item.get('examples') or (generate_samples(item['request_schema']) if item.get('request_schema') else [])) for item in source]
         return ApplicationModel(name=name, base_url=base_url, source_type="manual", source_fingerprint=_fingerprint(source), endpoints=endpoints)
 
 

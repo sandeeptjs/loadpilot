@@ -16,9 +16,12 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest"
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "typescript": "latest",
+    "typescript-eslint": "^8.69.0"
   }
 }
-

@@ -14,17 +14,34 @@ from .models import (
     TestType,
     UserJourney,
 )
+from .settings import Settings
 
 
 class TestPlanner:
+    __test__ = False
+    def __init__(self, settings: Settings | None = None):
+        self.settings = settings
+
     def plan(self, intent: PerformanceTestIntent, application: ApplicationModel, *, backend: ExecutionBackendType = ExecutionBackendType.LOCAL) -> PerformanceTestPlan:
         target = intent.target_concurrency or 100
         duration = intent.duration_seconds or 1200
-        stages = self._stages(intent.test_type, target, duration)
+        stages = self._stages(intent.test_type, target, duration, intent.max_concurrency)
         selected = self._select_endpoints(intent, application)
         steps = [JourneyStep(operation_id=e.operation_id, extract=self._extracts(e, application)) for e in selected]
         if not steps:
             raise ValueError("No target operations matched the intent")
+        if intent.target_rps:
+            if len(steps) != 1:
+                raise ValueError('HTTP RPS workloads currently require one operation; use concurrent users for multi-step journeys')
+            stages = [s.model_copy(update={'target_rps': (s.target_vus or 0) / target * intent.target_rps, 'target_vus': None}) for s in stages]
+        cap = self.settings.max_vus if self.settings else max(100, max((s.target_vus or 0 for s in stages), default=100))
+        if self.settings:
+            if duration > self.settings.max_duration_seconds or duration < 5:
+                raise ValueError(f'Duration must be between 5 and {self.settings.max_duration_seconds} seconds')
+            if max(s.target_vus or 0 for s in stages) > cap:
+                raise ValueError(f'Workload exceeds the configured {cap} VU limit; provide a bounded range')
+            if max(s.target_rps or 0 for s in stages) > self.settings.max_rps:
+                raise ValueError('Workload exceeds the configured RPS limit')
         thresholds: list[PerformanceThreshold] = []
         if intent.slos.latency_p95_ms:
             thresholds.append(PerformanceThreshold(metric="http_req_duration", expression=f"p(95)<{intent.slos.latency_p95_ms:g}", abort_on_fail=intent.test_type in {TestType.BASELINE, TestType.SOAK}, delay_abort_eval_seconds=min(60, duration // 10)))
@@ -40,39 +57,65 @@ class TestPlanner:
             stages=stages,
             journeys=[UserJourney(name="primary", steps=steps)],
             thresholds=thresholds,
-            payload_sources=["schemathesis", "runtime-dependency-values"],
-            abort_conditions=["platform safety budget exceeded", "target unreachable for 60s"],
+            payload_sources=["json-schema-validated-sample-pools", "runtime-dependency-values"],
+            abort_conditions=['Execution timeout', 'Transport failure rate reaches 20% after 5 seconds'],
             observability_requirements=["k6", "application", "infrastructure", "database"],
-            execution=ExecutionPlan(backend=backend, timeout_seconds=timeout),
+            execution=ExecutionPlan(backend=backend, timeout_seconds=timeout, max_vus=cap),
         )
 
     @staticmethod
-    def _stages(test_type: TestType, target: int, duration: int) -> list[LoadStage]:
-        def stage(name: str, fraction: float, vus: int) -> LoadStage:
-            return LoadStage(name=name, duration_seconds=max(1, int(duration * fraction)), target_vus=max(0, vus))
-        if test_type == TestType.BASELINE:
-            return [stage("warmup", .2, target), stage("baseline", .7, target), stage("cooldown", .1, 0)]
-        if test_type == TestType.SOAK:
-            return [stage("warmup", .05, target), stage("soak", .9, target), stage("cooldown", .05, 0)]
-        if test_type == TestType.SPIKE:
-            return [stage("warmup", .2, target), stage("spike", .1, target * 3), stage("recovery", .5, target), stage("cooldown", .2, 0)]
+    def _stages(test_type: TestType, target: int, duration: int, maximum: int | None = None) -> list[LoadStage]:
+        peak = maximum or target * (6 if test_type == TestType.BREAKPOINT else 3)
+        if maximum and maximum < target:
+            raise ValueError('Maximum concurrency must be at least the starting concurrency')
         if test_type in {TestType.STRESS, TestType.BREAKPOINT}:
-            peak = target * (6 if test_type == TestType.BREAKPOINT else 3)
-            levels = [target, math.ceil(target * 1.5), target * 2, peak]
-            each = .85 / len(levels)
-            return [stage("warmup", .1, max(1, target // 2))] + [stage(f"level-{value}", each, value) for value in levels] + [stage("cooldown", .05, 0)]
-        return [stage("ramp", .2, target), stage("steady", .7, target), stage("cooldown", .1, 0)]
+            levels = sorted({target, math.ceil((target + peak) / 2), peak})
+        elif test_type == TestType.SPIKE:
+            levels = [target, peak, target]
+        else:
+            levels = [target]
+        if duration < len(levels) * 2 + 1:
+            raise ValueError('Duration is too short for ramp and measurement stages')
+        ramp_seconds = max(1, int(duration * .05))
+        hold_total = duration - ramp_seconds * (len(levels) + 1)
+        holds = [hold_total // len(levels)] * len(levels)
+        holds[-1] += hold_total % len(levels)
+        stages = []
+        for index, (level, hold) in enumerate(zip(levels, holds)):
+            stages.append(LoadStage(name=f'ramp-{index + 1}', duration_seconds=ramp_seconds, target_vus=level, measurement=False))
+            stages.append(LoadStage(name=f'hold-{index + 1}-{level}', duration_seconds=hold, target_vus=level, measurement=True))
+        stages.append(LoadStage(name='cooldown', duration_seconds=ramp_seconds, target_vus=0, measurement=False))
+        return stages
 
     @staticmethod
     def _select_endpoints(intent: PerformanceTestIntent, application: ApplicationModel):
         if not intent.target_endpoints:
-            return application.endpoints
+            reads = [endpoint for endpoint in application.endpoints if endpoint.method == 'GET']
+            if not reads:
+                raise ValueError('Name the operation or journey to test; no read-only default operations exist')
+            return reads
         matches = [e for e in application.endpoints if any(term in (e.path + " " + e.operation_id + " " + " ".join(e.tags)).lower() for term in intent.target_endpoints)]
         if not matches:
-            return application.endpoints
-        required_ids = {d.producer_operation_id for d in application.dependencies if d.consumer_operation_id in {e.operation_id for e in matches}}
-        dependencies = [e for e in application.endpoints if e.operation_id in required_ids]
-        return dependencies + [e for e in matches if e.operation_id not in required_ids]
+            raise ValueError('No operations match the requested journey; supply an operation ID or endpoint')
+        endpoints = {e.operation_id: e for e in application.endpoints}
+        ordered, visited, visiting = [], set(), set()
+        def visit(operation_id):
+            if operation_id in visiting:
+                raise ValueError('Cyclic operation dependencies require an explicit journey')
+            if operation_id in visited:
+                return
+            if operation_id not in endpoints:
+                raise ValueError(f'Unknown dependency operation {operation_id}')
+            visiting.add(operation_id)
+            for dependency in application.dependencies:
+                if dependency.consumer_operation_id == operation_id:
+                    visit(dependency.producer_operation_id)
+            visiting.remove(operation_id)
+            visited.add(operation_id)
+            ordered.append(endpoints[operation_id])
+        for endpoint in matches:
+            visit(endpoint.operation_id)
+        return ordered
 
     @staticmethod
     def _extracts(endpoint, application: ApplicationModel) -> dict[str, str]:

@@ -10,6 +10,9 @@ export interface Run {
   execution_backend: string
   metrics: Record<string, number>
   error?: string
+  ai_mode?: 'offline' | 'provider'
+  slo_passed?: boolean | null
+  parent_run_id?: string
 }
 
 export interface Plan {
@@ -28,4 +31,6 @@ export interface Investigation {
   likely_root_cause?: string
   confidence: number
   recommended_next_experiment?: string
+  ai_summary?: string
+  limitations?: string[]
 }

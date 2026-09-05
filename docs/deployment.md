@@ -1,6 +1,7 @@
-# Deployment
+# Deployment scope
 
-Core local Compose services are LoadPilot API/web, PostgreSQL, Temporal, Prometheus, Alertmanager, OTel Collector, a k6 runner image, and the sandbox target. Optional profiles add Grafana, HolmesGPT and Robusta. Kubernetes deployments add the official k6 Operator; local operation never requires Kubernetes.
+The qualified path is the local Python launcher and portable k6. It binds the API and sandbox to loopback and requires no Docker or Kubernetes.
 
-Production requirements include TLS/OIDC, an external secret manager, restricted egress, dedicated load-generator networks, quotas, durable PostgreSQL, Temporal visibility/retention, Prometheus retention/remote storage and backed-up audit records.
+Docker Compose now starts API and sandbox by default. The API image includes k6 v1.6.1 and stores SQLite on a volume. Set SANDBOX_CONTROL_TOKEN in .env before `docker compose up --build`. Enable LOADPILOT_ALLOW_SANDBOX_REMEDIATION only for the sandbox demo. Prometheus, Alertmanager, OTel and Grafana use the optional observability profile.
 
+Compose has not been executed on this host because Docker is unavailable. Kubernetes and Temporal are not wired into execution. Public deployment still needs authentication, tenant isolation and network controls.

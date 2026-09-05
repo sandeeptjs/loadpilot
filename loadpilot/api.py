@@ -1,141 +1,256 @@
 from __future__ import annotations
 
-import os
+import asyncio
+import hashlib
+import json
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+from urllib.parse import urlsplit
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
+import httpx
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from .audit import audit_event
+from .analysis import compare_metrics
+from .audit import audit_event, redact
 from .lifecycle import RunStore
-from .models import Alert, AlertBatch, ExecutionBackendType, Investigation, PerformanceTestPlan, utcnow
+from .models import Alert, AlertBatch, ExecutionBackendType, SecretReference, StrictModel, utcnow
+from .remediation import PoolAction, Remediator
+from .reports import Report
 from .service import LoadPilotService
+from .settings import Settings, get_settings
+from .worker import Worker
 
 
 class CreateTestRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    prompt: str = Field(min_length=3)
-    source_type: str
-    source: Any
-    application_name: str = "Target application"
+    model_config = ConfigDict(populate_by_name=True, extra='forbid')
+    prompt: str = Field(min_length=3, max_length=20000)
+    source_type: Literal['openapi', 'manual', 'har', 'postman', 'graphql'] = 'openapi'
+    source: Any = None
+    source_url: str | None = None
+    application_name: str = 'Target application'
     base_url: str | None = None
-    environment: str = "local"
+    environment: str = 'local'
     backend: ExecutionBackendType = ExecutionBackendType.LOCAL
-    validate_script: bool = Field(default=False, alias="validate")
+    validate_script: bool = Field(default=False, alias='validate')
+    intent_overrides: dict | None = None
+    credentials_reference: SecretReference | None = None
+    run_at: datetime | None = None
+    auto_start: bool = False
+    auto_followup: bool = False
 
 
-app = FastAPI(title="LoadPilot API", version="0.1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:8000"], allow_methods=["*"], allow_headers=["*"])
-service = LoadPilotService(store=RunStore(os.environ.get("LOADPILOT_DB", "loadpilot.db")))
-
-
-@app.get("/api/health")
-def health():
-    return {"status": "ok", "version": "0.1.0"}
-
-
-@app.post("/api/tests", status_code=201)
-async def create_test(request: CreateTestRequest):
-    try:
-        payload = request.model_dump(exclude={"validate_script"})
-        return await service.prepare(**payload, validate=request.validate_script)
-    except Exception as exc:
-        raise HTTPException(422, str(exc)) from exc
-
-
-@app.get("/api/runs")
-def list_runs(limit: int = 100):
-    return service.store.list(min(limit, 500))
-
-
-@app.get("/api/runs/{run_id}")
-def get_run(run_id: UUID):
-    try:
-        run = service.store.get(run_id)
-        plan = service.store.get_entity("plan", run.plan_id, PerformanceTestPlan)
-        investigation = next((item for item in service.store.list_entities("investigation", Investigation) if item.run_id == run.id), None)
-        return {"run": run, "plan": plan, "investigation": investigation}
-    except KeyError as exc:
-        raise HTTPException(404, str(exc)) from exc
-
-
-@app.post("/api/runs/{run_id}/start")
-async def start_run(run_id: UUID):
-    try:
-        return await service.start(run_id)
-    except KeyError as exc:
-        raise HTTPException(404, str(exc)) from exc
-
-
-class CancelRequest(BaseModel):
+class CancelRequest(StrictModel):
     reason: str = Field(min_length=3, max_length=500)
 
 
-@app.post("/api/runs/{run_id}/cancel")
-def cancel_run(run_id: UUID, request: CancelRequest):
-    try:
+class ScheduleRequest(StrictModel):
+    run_at: datetime
+
+
+class RemediationRequest(StrictModel):
+    action: Literal['IncreaseSandboxPool'] = 'IncreaseSandboxPool'
+    pool_size: int = Field(ge=1, le=32)
+
+
+class Baseline(StrictModel):
+    id: UUID
+    name: str = Field(min_length=1, max_length=100)
+
+
+def create_app(settings: Settings | None = None, service: LoadPilotService | None = None):
+    settings = settings or get_settings()
+    service = service or LoadPilotService(RunStore(settings.db), settings.generated_dir, settings=settings)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        task = asyncio.create_task(Worker(service).run()) if settings.embedded_worker else None
+        yield
+        if task:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    app = FastAPI(title='LoadPilot API', version='0.2.0', lifespan=lifespan)
+    app.state.service = service
+    app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8000', 'http://127.0.0.1:8000'], allow_methods=['*'], allow_headers=['*'])
+
+    @app.exception_handler(KeyError)
+    async def missing(request, exc):
+        return JSONResponse(status_code=404, content={'detail': 'Requested record was not found'})
+
+    @app.exception_handler(ValueError)
+    async def invalid(request, exc):
+        return JSONResponse(status_code=422, content={'detail': redact(str(exc))})
+
+    @app.exception_handler(httpx.HTTPError)
+    async def upstream(request, exc):
+        return JSONResponse(status_code=502, content={'detail': 'Upstream service request failed; check target/provider configuration'})
+
+    @app.get('/api/health')
+    def health():
+        return {'status': 'ok', 'version': '0.2.0', 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'worker': 'embedded' if settings.embedded_worker else 'external'}
+
+    @app.get('/api/capabilities')
+    def capabilities():
+        return {'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
+
+    @app.post('/api/tests', status_code=201)
+    async def create_test(request: CreateTestRequest):
+        payload = request.model_dump(exclude={'validate_script', 'source_url', 'credentials_reference'})
+        if request.source_url:
+            settings.check_target(request.source_url)
+            async with httpx.AsyncClient(timeout=10) as client, client.stream('GET', request.source_url) as response:
+                response.raise_for_status()
+                chunks, size = [], 0
+                async for chunk in response.aiter_bytes():
+                    size += len(chunk)
+                    if size > 2_000_000:
+                        raise ValueError('Application schema exceeds 2 MB')
+                    chunks.append(chunk)
+            payload['source'] = json.loads(b''.join(chunks))
+            if not request.base_url:
+                parsed = urlsplit(request.source_url)
+                payload['base_url'] = f'{parsed.scheme}://{parsed.netloc}'
+        if payload['source'] is None:
+            raise ValueError('Provide source or source_url')
+        return await service.prepare(**payload, credentials_reference=request.credentials_reference, validate=request.validate_script)
+
+    @app.get('/api/runs')
+    def runs(limit: int = Query(100, ge=1, le=500)):
+        return service.store.list(limit)
+
+    @app.get('/api/runs/{run_id}')
+    def detail(run_id: UUID):
+        return service.detail(run_id)
+
+    @app.post('/api/runs/{run_id}/start', status_code=202)
+    def start(run_id: UUID):
+        return service.submit(run_id)
+
+    @app.post('/api/runs/{run_id}/schedule', status_code=202)
+    def schedule(run_id: UUID, request: ScheduleRequest):
+        return service.submit(run_id, request.run_at)
+
+    @app.post('/api/runs/{run_id}/cancel')
+    def cancel(run_id: UUID, request: CancelRequest):
         return service.cancel(run_id, request.reason)
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(409, str(exc)) from exc
+
+    @app.get('/api/runs/{run_id}/samples')
+    def samples(run_id: UUID, after: int = Query(0, ge=0), limit: int = Query(1000, ge=1, le=10000)):
+        service.store.get(run_id)
+        items = service.store.samples(run_id, after, limit)
+        return {'samples': items, 'next_cursor': items[-1]['id'] if items else after, 'semantics': 'Live p95 is a rolling sample estimate, RPS is cumulative since execution began; final summary is authoritative.'}
+
+    @app.get('/api/runs/{run_id}/script')
+    def script(run_id: UUID):
+        run = service.store.get(run_id)
+        artifact = next((item for item in run.artifacts if item.kind == 'k6-script'), None)
+        if not artifact:
+            raise HTTPException(404, 'No generated script')
+        path = Path(artifact.uri)
+        if not path.resolve().is_relative_to(service.generated_dir.resolve()):
+            raise ValueError('Artifact path is outside the configured directory')
+        if hashlib.sha256(path.read_bytes()).hexdigest() != artifact.sha256:
+            raise ValueError('Script integrity check failed')
+        return Response(path.read_text(encoding='utf-8'), media_type='application/javascript')
+
+    @app.get('/api/runs/{run_id}/report')
+    def report(run_id: UUID):
+        detail = service.detail(run_id)
+        return {'report': service.store.get_entity('report', run_id, Report), 'investigation': detail['investigation'], 'run': detail['run']}
+
+    @app.post('/api/runs/{run_id}/rerun', status_code=202)
+    def rerun(run_id: UUID):
+        return service.rerun(run_id)
+
+    @app.post('/api/runs/{run_id}/follow-up', status_code=202)
+    def followup(run_id: UUID):
+        return service.rerun(run_id, followup=True)
+
+    @app.get('/api/runs/{run_id}/compare/{baseline_id}')
+    def compare(run_id: UUID, baseline_id: UUID):
+        current, baseline = service.detail(run_id), service.detail(baseline_id)
+        for item in (current, baseline):
+            if item['run'].state.value != 'COMPLETED':
+                raise ValueError('Comparison requires two completed runs')
+        if current['application'].source_fingerprint != baseline['application'].source_fingerprint or current['application'].base_url != baseline['application'].base_url:
+            raise ValueError('Runs belong to different applications or targets')
+        same_workload = current['plan'].stages == baseline['plan'].stages and current['plan'].journeys == baseline['plan'].journeys
+        if any(item['run'].metrics.get('loadpilot_transport_failed.rate', 0) >= .2 for item in (current, baseline)):
+            raise ValueError('Transport failure invalidates application performance comparison')
+        keys = ['http_req_duration.p(95)', 'http_req_failed.rate', 'http_reqs.rate', 'loadpilot_journey_failed.rate']
+        return {'current_run_id': run_id, 'baseline_run_id': baseline_id, 'same_workload': same_workload, 'warning': None if same_workload else 'Workloads differ; differences do not establish a regression', 'metrics': compare_metrics({k: current['run'].metrics[k] for k in keys if k in current['run'].metrics}, {k: baseline['run'].metrics[k] for k in keys if k in baseline['run'].metrics})}
+
+    @app.post('/api/baselines', status_code=201)
+    def save_baseline(baseline: Baseline):
+        run = service.store.get(baseline.id)
+        if run.state.value != 'COMPLETED' or run.slo_passed is False:
+            raise ValueError('Baseline requires a completed passing run')
+        service.store.put_entity('baseline', baseline)
+        service._audit(run, 'baseline.saved', {}, baseline.model_dump(mode='json'), 'Save measured reference run')
+        return baseline
+
+    @app.get('/api/baselines')
+    def baselines():
+        return service.store.list_entities('baseline', Baseline)
+
+    @app.get('/api/audit')
+    def audit(limit: int = Query(200, ge=1, le=10000), run_id: UUID | None = None):
+        events = service.store.audit(limit)
+        return [event for event in events if run_id is None or event.related_test_id == run_id]
+
+    @app.post('/api/alerts', status_code=202)
+    def alerts(payload: dict[str, Any]):
+        values = []
+        for item in payload.get('alerts', []):
+            labels = {str(k): str(v) for k, v in item.get('labels', {}).items()}
+            def timestamp(value):
+                parsed = datetime.fromisoformat(value) if value else None
+                if parsed and parsed.tzinfo is None:
+                    raise ValueError('Alert timestamps must include timezone offsets')
+                return parsed
+            ends_at = timestamp(item.get('endsAt'))
+            if ends_at and ends_at.year == 1:
+                ends_at = None
+            values.append(Alert(fingerprint=str(item.get('fingerprint') or hashlib.sha256(json.dumps(labels, sort_keys=True).encode()).hexdigest()), name=labels.get('alertname', 'UnnamedAlert'), starts_at=timestamp(item.get('startsAt')) or utcnow(), ends_at=ends_at, labels=labels, annotations=redact(item.get('annotations', {}))))
+        batch = AlertBatch(alerts=values)
+        service.store.put_entity('alert_batch', batch)
+        service.store.append_audit(audit_event(actor='alertmanager', tool='webhook', action='alerts.received', inputs={}, outputs={'accepted': len(values), 'batch_id': str(batch.id)}, reason='Persist raw alerts for scoped correlation'))
+        return {'batch_id': batch.id, 'accepted': len(values)}
+
+    @app.get('/api/alerts')
+    def alert_batches():
+        return service.store.list_entities('alert_batch', AlertBatch)
+
+    @app.post('/api/runs/{run_id}/remediate', status_code=202)
+    async def remediate(run_id: UUID, request: RemediationRequest):
+        return await Remediator(service).apply(run_id, request.pool_size)
+
+    @app.get('/api/remediations')
+    def remediations():
+        return service.store.list_entities('remediation', PoolAction)
+
+    @app.post('/api/remediations/{action_id}/rollback')
+    async def rollback(action_id: UUID):
+        action = service.store.get_entity('remediation', action_id, PoolAction)
+        return await Remediator(service).apply(action.run_id, action.previous_size, rollback_id=action_id)
+
+    web_dist = Path(__file__).resolve().parent.parent / 'web' / 'dist'
+    if (web_dist / 'assets').exists():
+        app.mount('/assets', StaticFiles(directory=web_dist / 'assets'), name='assets')
+
+        @app.get('/{path:path}', include_in_schema=False)
+        def spa(path: str):
+            if path.startswith('api/'):
+                raise HTTPException(404, 'Unknown API route')
+            return FileResponse(web_dist / 'index.html')
+    return app
 
 
-@app.get("/api/audit")
-def audit(limit: int = 200):
-    return service.store.audit(min(limit, 500))
-
-
-def _alert_time(value: Any):
-    if not value:
-        return None
-    return datetime.fromisoformat(str(value))
-
-
-@app.post("/api/alerts", status_code=202)
-def ingest_alerts(payload: dict[str, Any]):
-    alerts = []
-    for item in payload.get("alerts", []):
-        labels = {str(key): str(value) for key, value in item.get("labels", {}).items()}
-        alerts.append(
-            Alert(
-                fingerprint=str(item.get("fingerprint") or f"{labels.get('alertname', 'alert')}:{len(alerts)}"),
-                name=labels.get("alertname", "UnnamedAlert"),
-                starts_at=_alert_time(item.get("startsAt")) or utcnow(),
-                ends_at=_alert_time(item.get("endsAt")),
-                labels=labels,
-                annotations={str(key): str(value) for key, value in item.get("annotations", {}).items()},
-            )
-        )
-    batch = AlertBatch(alerts=alerts)
-    service.store.put_entity("alert_batch", batch)
-    service.store.append_audit(
-        audit_event(
-            actor="alertmanager",
-            tool="alertmanager-webhook",
-            action="alerts.received",
-            inputs=payload,
-            outputs={"batch_id": str(batch.id), "accepted": len(alerts)},
-            reason="Persist external alerts for time-window correlation with performance runs.",
-        )
-    )
-    return {"batch_id": batch.id, "accepted": len(alerts)}
-
-
-@app.get("/api/alerts")
-def list_alert_batches(limit: int = 100):
-    return service.store.list_entities("alert_batch", AlertBatch, min(limit, 500))
-
-
-web_dist = Path(__file__).resolve().parent.parent / "web" / "dist"
-if web_dist.exists():
-    app.mount("/assets", StaticFiles(directory=web_dist / "assets"), name="assets")
-
-    @app.get("/{path:path}", include_in_schema=False)
-    def spa(path: str):
-        candidate = web_dist / path
-        return FileResponse(candidate if candidate.is_file() else web_dist / "index.html")
+app = create_app()

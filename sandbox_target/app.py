@@ -19,6 +19,7 @@ DB_POOL_ACTIVE = Gauge("sandbox_db_pool_active", "Active modeled database connec
 DB_POOL_SIZE = Gauge("sandbox_db_pool_size", "Configured modeled database pool size")
 DB_WAIT = Histogram("sandbox_db_pool_wait_seconds", "Time waiting for a modeled DB connection")
 DB_SATURATION_EVENTS = Counter("sandbox_db_pool_saturation_events_total", "Requests that arrived while every modeled DB connection was busy")
+MEMORY = Gauge('sandbox_retained_memory_bytes', 'Deliberately retained memory in soak demo')
 CACHE_HITS = Counter("sandbox_cache_hits_total", "Cache hits")
 CACHE_MISSES = Counter("sandbox_cache_misses_total", "Cache misses")
 ORDERS = Counter("sandbox_orders_total", "Completed orders")
@@ -37,6 +38,8 @@ controls = Controls()
 db_pool = asyncio.Semaphore(controls.db_pool_size)
 carts: dict[str, dict] = {}
 orders: dict[str, dict] = {}
+tokens: OrderedDict[str, None] = OrderedDict()
+database_inflight = 0
 cache: OrderedDict[str, list[dict]] = OrderedDict()
 retained_memory: list[bytes] = []
 PRODUCTS = [{"id": f"product-{index}", "name": f"Performance Widget {index}", "price": 9.99 + index} for index in range(1, 11)]
@@ -62,19 +65,28 @@ class ControlPayload(BaseModel):
 
 @asynccontextmanager
 async def database_slot():
+    global database_inflight
+    pool = db_pool
     started = time.perf_counter()
-    if db_pool.locked():
+    if pool.locked():
         DB_SATURATION_EVENTS.inc()
-    await db_pool.acquire()
-    waited = time.perf_counter() - started
-    DB_WAIT.observe(waited)
-    DB_POOL_ACTIVE.inc()
+    database_inflight += 1
+    acquired = False
     try:
+        await asyncio.wait_for(pool.acquire(), 2)
+        acquired = True
+        waited = time.perf_counter() - started
+        DB_WAIT.observe(waited)
+        DB_POOL_ACTIVE.inc()
         await asyncio.sleep(controls.db_latency_ms / 1000)
         yield
+    except TimeoutError:
+        raise HTTPException(503, 'Modeled connection pool wait timed out') from None
     finally:
-        DB_POOL_ACTIVE.dec()
-        db_pool.release()
+        database_inflight -= 1
+        if acquired:
+            DB_POOL_ACTIVE.dec()
+            pool.release()
 
 
 app = FastAPI(title="LoadPilot Checkout Sandbox", version="1.0.0")
@@ -106,7 +118,16 @@ async def login(payload: LoginPayload):
     async with database_slot():
         if not payload.email or not payload.password:
             raise HTTPException(401, "Invalid credentials")
-        return {"access_token": f"sandbox-{uuid4()}", "token_type": "bearer"}
+        token = f'sandbox-{uuid4()}'
+        tokens[token] = None
+        if len(tokens) > 10000:
+            tokens.popitem(last=False)
+        return {'access_token': token, 'token_type': 'bearer'}
+
+
+def require_auth(authorization):
+    if not authorization or not authorization.startswith('Bearer ') or authorization[7:] not in tokens:
+        raise HTTPException(401, 'Valid sandbox login token required')
 
 
 @app.get("/products", operation_id="listProducts")
@@ -124,36 +145,41 @@ async def products():
 
 @app.post("/cart", status_code=201, operation_id="createCart")
 async def create_cart(payload: CartPayload, authorization: str | None = Header(default=None)):
-    if not authorization:
-        raise HTTPException(401, "Bearer token required")
+    require_auth(authorization)
+    if payload.product_id not in {product['id'] for product in PRODUCTS}:
+        raise HTTPException(422, 'Unknown product ID')
     async with database_slot():
         cart_id = str(uuid4())
         carts[cart_id] = {"cart_id": cart_id, **payload.model_dump()}
+        if len(carts) > 10000:
+            carts.pop(next(iter(carts)))
         return carts[cart_id]
 
 
 @app.post("/checkout/{cart_id}", status_code=201, operation_id="checkout")
 async def checkout(cart_id: str, authorization: str | None = Header(default=None)):
-    if not authorization:
-        raise HTTPException(401, "Bearer token required")
+    require_auth(authorization)
     async with database_slot():
-        cart = carts.get(cart_id)
+        cart = carts.pop(cart_id, None)
         if not cart:
             raise HTTPException(404, "Cart not found")
         await asyncio.sleep(controls.checkout_latency_ms / 1000)
         order_id = str(uuid4())
         order = {"order_id": order_id, "cart_id": cart_id, "status": "confirmed"}
         orders[order_id] = order
+        if len(orders) > 1000:
+            orders.pop(next(iter(orders)))
         if controls.memory_growth_kb:
-            retained_memory.append(b"x" * controls.memory_growth_kb * 1024)
+            if sum(map(len, retained_memory)) < 64 * 1024 * 1024:
+                retained_memory.append(b"x" * controls.memory_growth_kb * 1024)
+            MEMORY.set(sum(map(len, retained_memory)))
         ORDERS.inc()
         return order
 
 
 @app.get("/orders", operation_id="listOrders")
 async def list_orders(authorization: str | None = Header(default=None)):
-    if not authorization:
-        raise HTTPException(401, "Bearer token required")
+    require_auth(authorization)
     async with database_slot():
         return list(orders.values())[-100:]
 
@@ -161,15 +187,36 @@ async def list_orders(authorization: str | None = Header(default=None)):
 @app.post("/control", include_in_schema=False)
 async def configure(payload: ControlPayload, x_control_token: str | None = Header(default=None)):
     expected = os.getenv("SANDBOX_CONTROL_TOKEN")
-    if expected and x_control_token != expected:
+    if not expected or x_control_token != expected:
         raise HTTPException(403, "Invalid control token")
     global db_pool
+    if database_inflight:
+        raise HTTPException(409, 'Wait for the workload to drain before changing controls')
     for key, value in payload.model_dump(exclude_none=True).items():
         setattr(controls, key, value)
     if payload.db_pool_size is not None:
         db_pool = asyncio.Semaphore(payload.db_pool_size)
         DB_POOL_SIZE.set(payload.db_pool_size)
     return controls.__dict__
+
+
+@app.get('/control', include_in_schema=False)
+def read_controls(x_control_token: str | None = Header(default=None)):
+    if not os.getenv('SANDBOX_CONTROL_TOKEN') or x_control_token != os.getenv('SANDBOX_CONTROL_TOKEN'):
+        raise HTTPException(403, 'Invalid control token')
+    return controls.__dict__
+
+
+@app.post('/control/reset', include_in_schema=False)
+async def reset(x_control_token: str | None = Header(default=None)):
+    await configure(ControlPayload(db_pool_size=12, db_latency_ms=35, checkout_latency_ms=25, cache_enabled=True, memory_growth_kb=0), x_control_token)
+    carts.clear()
+    orders.clear()
+    cache.clear()
+    tokens.clear()
+    retained_memory.clear()
+    MEMORY.set(0)
+    return {'reset': True, 'controls': controls.__dict__}
 
 
 @app.get("/metrics", include_in_schema=False)
@@ -185,6 +232,16 @@ def custom_openapi():
     schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
     checkout_response = schema["paths"]["/cart"]["post"]["responses"]["201"]
     checkout_response["links"] = {"checkout": {"operationId": "checkout", "parameters": {"cart_id": "$response.body#/cart_id"}}}
+    schema['paths']['/login']['post']['responses']['200']['links'] = {
+        'cartAuth': {'operationId': 'createCart', 'parameters': {'Authorization': '$response.body#/access_token'}},
+        'checkoutAuth': {'operationId': 'checkout', 'parameters': {'Authorization': '$response.body#/access_token'}},
+        'ordersAuth': {'operationId': 'listOrders', 'parameters': {'Authorization': '$response.body#/access_token'}},
+    }
+    schema['paths']['/products']['get']['responses']['200']['links'] = {'cartProduct': {'operationId': 'createCart', 'parameters': {'product_id': '$response.body#/0/id'}}}
+    schema.setdefault('components', {})['securitySchemes'] = {'bearerAuth': {'type': 'http', 'scheme': 'bearer'}}
+    for path in ('/cart', '/checkout/{cart_id}', '/orders'):
+        for operation in schema['paths'][path].values():
+            operation['security'] = [{'bearerAuth': []}]
     schema["servers"] = [{"url": "http://sandbox-target:8080"}]
     app.openapi_schema = schema
     return schema
