@@ -23,6 +23,10 @@ class ExecutionResult:
     summary: dict[str, Any]
 
 
+class OutputBudgetExceeded(RuntimeError):
+    pass
+
+
 class K6Unavailable(RuntimeError):
     pass
 
@@ -36,8 +40,9 @@ class ExecutionBackend(ABC):
 
 
 class LocalK6Backend(ExecutionBackend):
-    def __init__(self, binary: str | None = None) -> None:
+    def __init__(self, binary: str | None = None, max_output_bytes: int = 250_000_000) -> None:
         self.binary = binary or os.environ.get("LOADPILOT_K6_BIN", "k6")
+        self.max_output_bytes = max_output_bytes
         self.processes = {}
         self.on_sample = None
 
@@ -87,10 +92,17 @@ class LocalK6Backend(ExecutionBackend):
             environment[reference.key] = value
         for index, journey in enumerate(plan.journeys):
             environment['LOADPILOT_PREFLIGHT'] = str(index)
-            environment['LOADPILOT_SUMMARY_PATH'] = str(script.with_suffix(f'.preflight-{index}.json').resolve())
+            summary_path = script.with_suffix(f'.preflight-{index}.json').resolve()
+            summary_path.unlink(missing_ok=True)
+            environment['LOADPILOT_SUMMARY_PATH'] = str(summary_path)
             code, _, _ = await self._run('run', '--quiet', str(script), timeout=65, env=environment, run_id=run.id)
-            if code:
-                raise ValueError(f'Preflight failed for journey {journey.name}: check credentials, extracted values, payload constraints and response assertions. Load was not started.')
+            failures = []
+            if summary_path.exists():
+                summary = json.loads(summary_path.read_text(encoding='utf-8'))
+                failures = [item.get('name', 'check') for item in (summary.get('checks') or {}).get('checks', []) if item.get('fails', 0)]
+            if code or not summary_path.exists():
+                detail = '; '.join(failures[:5]) or 'No successful preflight evidence'
+                raise ValueError(f'Preflight failed for journey {journey.name}: {detail}; check credentials, extracted values, payload constraints and response assertions. Load was not started.')
 
     async def execute(self, run: TestRun, plan: PerformanceTestPlan, script: Path) -> ExecutionResult:
         # Do not forward provider keys, control tokens or unrelated target overrides to k6.
@@ -114,7 +126,12 @@ class LocalK6Backend(ExecutionBackend):
             code, stdout, stderr = await self._run('run', '--quiet', '--out', f'json={output_path}', '--tag', f'test_run_id={run.id}', str(script), timeout=plan.execution.timeout_seconds, env=environment, run_id=run.id)
         finally:
             done.set()
-            await monitor
+            monitor_results = await asyncio.gather(monitor, return_exceptions=True)
+        if isinstance(monitor_results[0], OutputBudgetExceeded):
+            code = code or 1
+            stderr += '\n' + str(monitor_results[0])
+        elif isinstance(monitor_results[0], Exception):
+            stderr += '\nLive sample collection failed; final summary remains authoritative.'
         summary = {}
         if summary_path.exists():
             summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -133,6 +150,9 @@ class LocalK6Backend(ExecutionBackend):
         started = loop.time()
         while True:
             if path.exists():
+                if path.stat().st_size > self.max_output_bytes:
+                    self.cancel(run_id)
+                    raise OutputBudgetExceeded('Local raw-metrics storage budget exceeded; workload stopped')
                 with path.open(encoding='utf-8') as stream:
                     stream.seek(offset)
                     chunk = stream.read(4 * 1024 * 1024)

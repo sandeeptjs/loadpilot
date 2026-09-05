@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -55,7 +57,7 @@ class LoadPilotService:
         self.k6_compiler = K6Compiler()
         self.analyzer = ResultAnalyzer()
         self.backends = backends or {
-            ExecutionBackendType.LOCAL: LocalK6Backend(self.settings.k6_bin),
+            ExecutionBackendType.LOCAL: LocalK6Backend(self.settings.k6_bin, max_output_bytes=self.settings.max_artifact_bytes),
             ExecutionBackendType.DOCKER: DockerK6Backend(),
             ExecutionBackendType.KUBERNETES: KubernetesK6Backend(),
         }
@@ -78,6 +80,9 @@ class LoadPilotService:
             if not application.base_url:
                 raise ValueError('A target base URL is required')
             self.settings.check_target(str(application.base_url))
+            for endpoint in application.endpoints:
+                if endpoint.base_url:
+                    self.settings.check_target(str(endpoint.base_url))
             if backend != ExecutionBackendType.LOCAL:
                 raise ValueError('Only local execution is currently qualified; it also runs inside the API container')
             if self.settings.ai_enabled:
@@ -120,14 +125,13 @@ class LoadPilotService:
                 if not re.fullmatch(r'TARGET_[A-Z0-9_]+', credentials_reference.key):
                     raise ValueError('Execution secret references must use TARGET_ environment variables')
                 plan.execution.secret_references['TARGET_TOKEN'] = credentials_reference
-            import json
             for reference in set(re.findall(r'env:(TARGET_[A-Z0-9_]+)', json.dumps([j.model_dump() for j in plan.journeys]))):
                 plan.execution.secret_references[reference] = SecretReference(key=reference)
             # Authenticated operations need a token binding or a supplied secret reference.
             for step in [step for journey in plan.journeys for step in journey.steps]:
                 endpoint = next(e for e in application.endpoints if e.operation_id == step.operation_id)
                 bound_auth = any(d.consumer_operation_id == endpoint.operation_id and d.input_name == 'Authorization' for d in application.dependencies)
-                if endpoint.auth_schemes and not bound_auth and not credentials_reference and not step.headers:
+                if endpoint.auth_schemes and not bound_auth and not credentials_reference and not step.headers and not step.basic_auth:
                     raise ValueError(f'Authentication for {endpoint.operation_id} requires a credential reference or login dependency')
             self.store.put_entity("plan", plan)
             run = self.store.save(run.model_copy(update={"plan_id": plan.id}))
@@ -176,10 +180,15 @@ class LoadPilotService:
 
     async def start(self, run_id: UUID | str) -> TestRun:
         run = self.store.get(run_id)
-        plan = self.store.get_entity("plan", run.plan_id, PerformanceTestPlan)
-        path = Path(next(a.uri for a in run.artifacts if a.kind == "k6-script"))
-        backend = self.backends[plan.execution.backend]
         try:
+            plan = self.store.get_entity("plan", run.plan_id, PerformanceTestPlan)
+            application = self.store.get_entity("application", plan.application_id, ApplicationModel)
+            self.settings.check_target(str(application.base_url))
+            for endpoint in application.endpoints:
+                if endpoint.base_url:
+                    self.settings.check_target(str(endpoint.base_url))
+            path = Path(next(a.uri for a in run.artifacts if a.kind == "k6-script"))
+            backend = self.backends[plan.execution.backend]
             if run.state in TERMINAL:
                 return run
             if run.scheduled_at and run.scheduled_at > utcnow():
@@ -290,7 +299,7 @@ class LoadPilotService:
             if not isinstance(values, dict):
                 continue
             for key in ("p(95)", "rate", "count", "avg", "max"):
-                if isinstance(values.get(key), (int, float)):
+                if isinstance(values.get(key), (int, float)) and math.isfinite(values[key]):
                     output[f"{name}.{key}"] = float(values[key])
         return output
 
@@ -335,7 +344,7 @@ class LoadPilotService:
                     values[name] = float(raw)
                 except ValueError:
                     continue
-            return values
+            return {k: v for k, v in values.items() if math.isfinite(v)}
         except (httpx.HTTPError, ValueError):
             return {}
 
@@ -358,11 +367,13 @@ class LoadPilotService:
         investigation = next((item for item in self.store.list_entities('investigation', Investigation, 10000) if item.run_id == run.id), None)
         return {'run': run, 'plan': plan, 'intent': self.store.get_entity('intent', plan.intent_id, PerformanceTestIntent), 'application': self.store.get_entity('application', plan.application_id, ApplicationModel), 'investigation': investigation}
 
-    def rerun(self, run_id, *, followup=False, auto_start=True):
+    def rerun(self, run_id, *, followup=False, auto_start=True, journeys=None):
         detail = self.detail(run_id)
         original, old_plan, application = detail['run'], detail['plan'], detail['application']
-        if original.state != RunState.COMPLETED:
-            raise ValueError('Only completed runs can be repeated')
+        if original.state not in TERMINAL or not old_plan or not application:
+            raise ValueError('Recovery requires a terminal run with a reusable plan')
+        if followup and original.state != RunState.COMPLETED:
+            raise ValueError('Follow-up analysis requires a completed run')
         intent = detail['intent'].model_copy(deep=True, update={'id': uuid4(), 'schedule': None})
         if followup:
             if original.parent_run_id:
@@ -383,10 +394,15 @@ class LoadPilotService:
                 raise ValueError('No measured pass/fail bracket can be narrowed')
             intent.target_concurrency, intent.max_concurrency = max(passing), high
             intent.duration_seconds = min(intent.duration_seconds or 60, 60)
-            plan = self.planner.plan(intent, application)
+            plan = self.planner.plan(intent, application, journeys=old_plan.journeys if any(not j.infer_dependencies for j in old_plan.journeys) else None)
         else:
             plan = old_plan.model_copy(deep=True, update={'id': uuid4(), 'intent_id': intent.id})
         plan.execution.secret_references = old_plan.execution.secret_references.copy()
+        if journeys:
+            plan = self.planner.plan(intent, application, backend=old_plan.execution.backend, journeys=journeys)
+            plan.execution.secret_references = old_plan.execution.secret_references.copy()
+            for reference in set(re.findall(r'env:(TARGET_[A-Z0-9_]+)', json.dumps([j.model_dump() for j in plan.journeys]))):
+                plan.execution.secret_references[reference] = SecretReference(key=reference)
         run = self.store.create(TestRun(plan_id=plan.id, execution_backend=plan.execution.backend, parent_run_id=original.id, ai_mode=original.ai_mode))
         self.store.put_entity('intent', intent)
         self.store.put_entity('plan', plan)
@@ -402,7 +418,8 @@ class LoadPilotService:
 
     @staticmethod
     def _target_metric_deltas(before: dict[str, float], after: dict[str, float]) -> dict[str, float]:
-        if not after:
+        counters = {'sandbox_db_pool_saturation_events_total', 'sandbox_db_pool_wait_seconds_sum', 'sandbox_db_pool_wait_seconds_count'}
+        if not counters <= before.keys() or not counters <= after.keys() or any(after[k] < before[k] for k in counters):
             return {}
         saturation = after.get("sandbox_db_pool_saturation_events_total", 0) - before.get("sandbox_db_pool_saturation_events_total", 0)
         wait_sum = after.get("sandbox_db_pool_wait_seconds_sum", 0) - before.get("sandbox_db_pool_wait_seconds_sum", 0)

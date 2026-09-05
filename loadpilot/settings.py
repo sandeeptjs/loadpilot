@@ -7,12 +7,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='LOADPILOT_', env_file='.env', extra='ignore')
+    api_token: str = ''
     db: str = 'artifacts/loadpilot.db'
     generated_dir: str = 'artifacts/generated-tests'
     k6_bin: str = 'k6'
     embedded_worker: bool = True
     max_vus: int = Field(default=100, ge=1, le=2000)
     max_duration_seconds: int = Field(default=7200, ge=5, le=86400)
+    max_artifact_bytes: int = Field(default=250_000_000, ge=1_000_000)
     max_rps: int = Field(default=100, ge=1)
     allowed_hosts: str = 'localhost,127.0.0.1,::1,sandbox-target'
     sandbox_url: str = 'http://127.0.0.1:8080'

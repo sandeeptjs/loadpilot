@@ -55,12 +55,14 @@ uv run python scripts/run_scenario.py examples/scenarios/mixed.json
 
 The CLI prints the run ID and final measurements. The same runs appear in the dashboard. The fixture verifies HTTP transport, bindings and assertions; it is not a realistic support-ticket database or a GraphQL engine. The separate checkout sandbox remains the contention/remediation demo.
 
-For another application, replace the source, base URL and journeys. Add its hostname to `LOADPILOT_ALLOWED_HOSTS` before starting the API. OpenAPI supports JSON, form and text bodies. Manual definitions support those encodings too. HAR preserves sanitized JSON requests and query parameters. Postman preserves raw JSON bodies, headers and query parameters and supports supplied `baseUrl`/`base_url`; collection scripts and arbitrary variables are not executed. GraphQL accepts `{ "operations": [{ "name": "query", "query": "query { health }", "variables": {} }] }`. Introspection alone is rejected because it does not establish a valid business query.
+For another application, replace the source, base URL and journeys. Add its hostname to `LOADPILOT_ALLOWED_HOSTS` before starting the API. OpenAPI supports JSON, form, text and bounded multipart bodies. Manual definitions support those encodings too. HAR preserves sanitized JSON requests and query parameters. Postman preserves raw JSON bodies, headers and query parameters and supports supplied `baseUrl`/`base_url`; collection scripts and arbitrary variables are not executed. GraphQL accepts `{ "operations": [{ "name": "query", "query": "query { health }", "variables": {} }] }`. Introspection alone is rejected because it does not establish a valid business query.
 
-Browser UI automation, WebSockets, gRPC, multipart uploads, distributed workers, conditional branches and automatic business-rule repair remain outside this implementation. An application description cannot supply unknown credentials, valid account IDs or undocumented business constraints.
+Conditional branches and bounded multipart uploads are now supported; see local-backend.md. Browser UI automation, WebSockets, gRPC, distributed workers and automatic semantic business-rule repair remain outside this implementation. An application description cannot supply unknown credentials, valid account IDs or undocumented business constraints.
 
 ## Verification
 
 The backend suite passes 31 tests. Public API tests execute real k6 against the independent fixture for ticket/login dependencies, search parameters and repetition, GraphQL documents, form and text bodies, and weighted mixed journeys. An invalid resource makes exactly one preflight request before failing. The provider journey contract is tested with a mock response, not a credentialed model call.
 
 The saved mixed example also completed through the CLI and the running API on port 8018 with 18 measured requests, no HTTP or journey failures, and all checks passing. The existing checkout flow completed after the preflight change with seven measured requests and no journey failures. These short runs verify execution, not capacity or long-term stability.
+
+See [local backend acceptance](local-backend.md) for conditions, polling, retries, datasets, authentication, uploads, saved definitions and recovery.

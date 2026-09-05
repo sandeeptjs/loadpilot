@@ -183,7 +183,8 @@ async def test_local_subprocess_is_killed_on_task_cancellation(tmp_path):
 
 def test_rescheduling_updates_persisted_due_time(tmp_path):
     store = RunStore(tmp_path / 'queue.db')
-    run_id = str(uuid4())
+    from loadpilot.models import TestRun as Run
+    run_id = str(store.create(Run(plan_id=uuid4(), execution_backend=ExecutionBackendType.LOCAL)).id)
     store.enqueue(run_id, 100)
     store.enqueue(run_id, 200)
     assert store.claim('worker', 150) is None

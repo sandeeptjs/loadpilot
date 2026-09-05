@@ -1,0 +1,181 @@
+{
+  "prompt": "Baseline with 1 user for 5 seconds",
+  "source_type": "manual",
+  "source": [
+    {
+      "operation_id": "basic",
+      "method": "GET",
+      "path": "/basic"
+    },
+    {
+      "operation_id": "ready",
+      "method": "GET",
+      "path": "/ready"
+    },
+    {
+      "operation_id": "temporary",
+      "method": "GET",
+      "path": "/temporary"
+    },
+    {
+      "operation_id": "never",
+      "method": "GET",
+      "path": "/never"
+    },
+    {
+      "operation_id": "token",
+      "method": "POST",
+      "path": "/token",
+      "content_type": "application/x-www-form-urlencoded"
+    },
+    {
+      "operation_id": "protected",
+      "method": "GET",
+      "path": "/protected"
+    },
+    {
+      "operation_id": "filter",
+      "method": "GET",
+      "path": "/filter",
+      "parameters": [
+        {
+          "name": "tag",
+          "location": "query"
+        },
+        {
+          "name": "filter",
+          "location": "query",
+          "style": "deepObject"
+        }
+      ]
+    },
+    {
+      "operation_id": "upload",
+      "method": "POST",
+      "path": "/upload",
+      "content_type": "multipart/form-data"
+    },
+    {
+      "operation_id": "search",
+      "method": "GET",
+      "path": "/search",
+      "parameters": [
+        {
+          "name": "q",
+          "location": "query"
+        }
+      ],
+      "base_url": "http://localhost:8090"
+    }
+  ],
+  "base_url": "http://127.0.0.1:8090",
+  "journeys": [
+    {
+      "name": "authenticated workflow",
+      "datasets": {
+        "term": [
+          "books"
+        ]
+      },
+      "steps": [
+        {
+          "operation_id": "basic",
+          "basic_auth": {
+            "username": "env:TARGET_USER",
+            "password": "env:TARGET_PASSWORD"
+          },
+          "extract": {
+            "enabled": "/enabled"
+          }
+        },
+        {
+          "operation_id": "token",
+          "body": {
+            "grant_type": "client_credentials",
+            "client_id": "env:TARGET_USER",
+            "client_secret": "env:TARGET_PASSWORD"
+          },
+          "extract": {
+            "access": "/access_token"
+          }
+        },
+        {
+          "operation_id": "protected",
+          "headers": {
+            "Authorization": "Bearer ${access}"
+          },
+          "assertions": [
+            {
+              "pointer": "/accepted",
+              "equals": true
+            }
+          ]
+        },
+        {
+          "operation_id": "filter",
+          "inputs": {
+            "tag": [
+              "one",
+              "two"
+            ],
+            "filter": {
+              "state": "open"
+            }
+          }
+        },
+        {
+          "operation_id": "never",
+          "when": {
+            "variable": "enabled",
+            "equals": false
+          }
+        },
+        {
+          "operation_id": "ready",
+          "when": {
+            "variable": "enabled",
+            "equals": true
+          },
+          "until": {
+            "pointer": "/ready",
+            "equals": true
+          },
+          "repeat": 3,
+          "poll_interval_seconds": 0.1
+        },
+        {
+          "operation_id": "temporary",
+          "retries": 1
+        },
+        {
+          "operation_id": "upload",
+          "files": {
+            "file": {
+              "filename": "sample.txt",
+              "content": "hello upload",
+              "content_type": "text/plain"
+            }
+          },
+          "assertions": [
+            {
+              "pointer": "/uploaded",
+              "equals": true
+            }
+          ]
+        },
+        {
+          "operation_id": "search",
+          "inputs": {
+            "q": "${term}"
+          },
+          "assertions": [
+            {
+              "pointer": "/results/0",
+              "equals": "book"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

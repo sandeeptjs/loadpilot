@@ -52,3 +52,5 @@ The demo uses FastAPI, SQLite, React and a local k6 executable. The supplied API
 See [demo script](docs/demo.md), [API examples](docs/backend-api.md), [architecture](docs/architecture.md), [acceptance evidence](docs/backend-acceptance.md), and [remaining gaps](docs/remaining-gaps.md).
 
 See [general HTTP scenarios](docs/scenarios.md) for model-generated or explicit journeys, preflight validation, budget controls and runnable ticket/search/GraphQL examples.
+
+[Local backend operation and acceptance](docs/local-backend.md) covers saved definitions, conditions, polling, authentication, uploads, recovery, readiness and backups.

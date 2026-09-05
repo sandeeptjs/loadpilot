@@ -4,7 +4,7 @@ import time
 from uuid import uuid4
 
 from .lifecycle import TERMINAL, RunStore
-from .models import PerformanceTestPlan, RunState
+from .models import PerformanceTestPlan, RunState, utcnow
 from .service import LoadPilotService
 from .settings import get_settings
 
@@ -24,7 +24,10 @@ class Worker:
                 for run_id in store.stale_jobs(time.time() - 30):
                     run = store.get(run_id)
                     plan = store.get_entity('plan', run.plan_id, PerformanceTestPlan)
-                    if (run.started_at or run.created_at).timestamp() + plan.execution.timeout_seconds + 30 < time.time():
+                    if not run.claimed_at:
+                        run = store.update(run_id, claimed_at=utcnow())
+                    deadline = run.claimed_at.timestamp() + plan.execution.timeout_seconds + len(plan.journeys) * 65 + 90
+                    if deadline < time.time():
                         if run.state not in TERMINAL:
                             run = store.transition(run_id, RunState.FAILED, error='Worker lease expired; workload was not replayed')
                             self.service._audit(run, 'worker.interrupted', {}, {}, 'Recover interrupted run without duplicate traffic')

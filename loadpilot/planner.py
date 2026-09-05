@@ -35,7 +35,7 @@ class TestPlanner:
         if not steps:
             raise ValueError("No target operations matched the intent")
         if intent.target_rps:
-            if len(steps) != 1:
+            if len(steps) != 1 or any(s.repeat != 1 or s.retries or s.until or s.when for s in steps):
                 raise ValueError('HTTP RPS workloads currently require one operation; use concurrent users for multi-step journeys')
             stages = [s.model_copy(update={'target_rps': (s.target_vus or 0) / target * intent.target_rps, 'target_vus': None}) for s in stages]
         cap = self.settings.max_vus if self.settings else max(100, max((s.target_vus or 0 for s in stages), default=100))

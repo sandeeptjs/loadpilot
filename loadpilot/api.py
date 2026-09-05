@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import secrets
+import shutil
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .analysis import compare_metrics
 from .audit import audit_event, redact
+from .definitions import DefinitionExecution, SavedDefinition
 from .lifecycle import RunStore
 from .models import Alert, AlertBatch, ExecutionBackendType, SecretReference, StrictModel, UserJourney, utcnow
 from .remediation import PoolAction, Remediator
@@ -47,6 +50,17 @@ class CreateTestRequest(BaseModel):
     journeys: list[UserJourney] | None = Field(default=None, min_length=1, max_length=10)
 
 
+class DefinitionRequest(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+    previous_version: UUID | None = None
+    request: CreateTestRequest
+
+
+class RecoveryRequest(StrictModel):
+    journeys: list[UserJourney] | None = Field(default=None, min_length=1, max_length=10)
+    auto_start: bool = True
+
+
 class CancelRequest(StrictModel):
     reason: str = Field(min_length=3, max_length=500)
 
@@ -72,6 +86,7 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
     @asynccontextmanager
     async def lifespan(app):
         task = asyncio.create_task(Worker(service).run()) if settings.embedded_worker else None
+        app.state.worker_task = task
         yield
         if task:
             task.cancel()
@@ -80,6 +95,24 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
     app = FastAPI(title='LoadPilot API', version='0.2.0', lifespan=lifespan)
     app.state.service = service
     app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8000', 'http://127.0.0.1:8000'], allow_methods=['*'], allow_headers=['*'])
+
+    @app.middleware('http')
+    async def api_auth(request, call_next):
+        if settings.api_token and request.url.path.startswith('/api/') and request.url.path != '/api/health':
+            authorization = request.headers.get('Authorization', '')
+            supplied = authorization[7:] if authorization.startswith('Bearer ') else ''
+            if not secrets.compare_digest(supplied.encode(), settings.api_token.encode()):
+                return JSONResponse(status_code=401, content={'detail': 'A valid API bearer token is required'})
+        return await call_next(request)
+
+    @app.get('/api/readiness')
+    def readiness():
+        with service.store._connect() as db:
+            db.execute('SELECT 1').fetchone()
+        binary = shutil.which(settings.k6_bin)
+        task = getattr(app.state, 'worker_task', None)
+        worker_live = not settings.embedded_worker or bool(task and not task.done())
+        return JSONResponse(status_code=200 if binary and worker_live else 503, content={'ready': bool(binary and worker_live), 'worker': 'embedded-running' if settings.embedded_worker and worker_live else 'embedded-stopped' if settings.embedded_worker else 'external-managed', 'database': 'ok', 'k6': 'available' if binary else 'missing', 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'execution_scope': 'one local workload per database'})
 
     @app.exception_handler(KeyError)
     async def missing(request, exc):
@@ -99,7 +132,7 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
 
     @app.get('/api/capabilities')
     def capabilities():
-        return {'scenario_features': ['ordered steps', 'nested JSON bindings', 'response assertions', 'weighted journeys', 'bounded repetition', 'preflight before load', 'JSON/form/text requests', 'environment credential references'], 'scenario_sources': ['openapi', 'manual', 'har', 'postman', 'graphql documents'], 'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
+        return {'scenario_features': ['conditional steps', 'bounded polling and read retries', 'datasets and unique iteration values', 'basic auth and login/token journeys', 'multipart uploads', 'multi-service operations', 'saved definitions and recovery', 'ordered steps', 'nested JSON bindings', 'response assertions', 'weighted journeys', 'bounded repetition', 'preflight before load', 'JSON/form/text/multipart requests', 'environment credential references'], 'scenario_sources': ['openapi', 'manual', 'har', 'postman', 'graphql documents'], 'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
 
     @app.post('/api/tests', status_code=201)
     async def create_test(request: CreateTestRequest):
@@ -121,6 +154,35 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
         if payload['source'] is None:
             raise ValueError('Provide source or source_url')
         return await service.prepare(**payload, credentials_reference=request.credentials_reference, validate=request.validate_script)
+
+    @app.post('/api/definitions', status_code=201)
+    def save_definition(request: DefinitionRequest):
+        if request.previous_version:
+            service.store.get_entity('definition', request.previous_version, SavedDefinition)
+        payload = request.request.model_dump(mode='json', by_alias=True)
+        payload.update(auto_start=False, auto_followup=False, run_at=None)
+        definition = SavedDefinition(name=request.name, previous_version=request.previous_version, request=payload)
+        service.store.put_entity('definition', definition)
+        service.store.append_audit(audit_event(actor='user', tool='definitions', action='definition.saved', inputs={}, outputs={'id': str(definition.id), 'previous_version': str(definition.previous_version) if definition.previous_version else None}, reason='Save an immutable reusable test definition'))
+        return definition
+
+    @app.get('/api/definitions')
+    def definitions(limit: int = Query(100, ge=1, le=1000)):
+        return service.store.list_entities('definition', SavedDefinition, limit)
+
+    @app.get('/api/definitions/{definition_id}')
+    def definition(definition_id: UUID):
+        return service.store.get_entity('definition', definition_id, SavedDefinition)
+
+    @app.post('/api/definitions/{definition_id}/run', status_code=202)
+    async def execute_definition(definition_id: UUID, request: DefinitionExecution):
+        saved = service.store.get_entity('definition', definition_id, SavedDefinition)
+        payload = {**saved.request, 'auto_start': request.auto_start, 'run_at': request.run_at}
+        if request.intent_overrides:
+            payload['intent_overrides'] = {**(payload.get('intent_overrides') or {}), **request.intent_overrides}
+        run = await create_test(CreateTestRequest.model_validate(payload))
+        service._audit(run, 'definition.executed', {'definition_id': str(definition_id)}, {}, 'Run the selected immutable definition version')
+        return run
 
     @app.get('/api/runs')
     def runs(limit: int = Query(100, ge=1, le=500)):
@@ -170,7 +232,25 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
     def rerun(run_id: UUID):
         return service.rerun(run_id)
 
-    @app.post('/api/runs/{run_id}/follow-up', status_code=202)
+    @app.post('/api/runs/{run_id}/recover', status_code=202)
+    def recover(run_id: UUID, request: RecoveryRequest):
+        return service.rerun(run_id, auto_start=request.auto_start, journeys=request.journeys)
+
+    @app.get('/api/runs/{run_id}/diagnostics')
+    def diagnostics(run_id: UUID):
+        run = service.store.get(run_id)
+        path = next((Path(a.uri) for a in run.artifacts if a.kind == 'k6-script'), None)
+        preflights = []
+        if path and path.resolve().is_relative_to(service.generated_dir.resolve()):
+            for artifact in sorted(path.parent.glob(path.stem + '.preflight-*.json')):
+                try:
+                    summary = json.loads(artifact.read_text(encoding='utf-8'))
+                    preflights.append({'journey_index': int(artifact.name.split('.preflight-')[1].split('.')[0]), 'checks': summary.get('checks'), 'failures': summary.get('failures', [])})
+                except (ValueError, OSError):
+                    continue
+        return {'state': run.state, 'error': run.error, 'preflights': preflights, 'recovery': 'Correct the definition or environment credentials, then POST /recover. The original run stays unchanged.'}
+
+    @app.post('/api/runs/{run_id}/follow-up' , status_code=202)
     def followup(run_id: UUID):
         return service.rerun(run_id, followup=True)
 
