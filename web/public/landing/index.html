@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+
+<html class="" lang="en" xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<meta content="Payload CMS" name="generator"/>
+<title>LoadPilot | Autonomous performance testing</title>
+<meta content="Describe your workload. Generate test data and k6 scripts, schedule runs, and inspect performance evidence with LoadPilot." name="description"/>
+<link href="https://cdn.jsdelivr.net" rel="dns-prefetch"/>
+<link href="/landing/hobro.digital/css/main-577c2c06a3.css" rel="stylesheet"/>
+<link as="style" href="/landing/hobro.digital/css/fonts-1e8396ff4d.css" rel="preload"/>
+<link as="style" href="/landing/cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.css" rel="preload"/>
+<link href="/landing/hobro.digital/css/fonts-1e8396ff4d.css" media="all" onload="this.media='all'" rel="stylesheet"/>
+<link href="/landing/cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.css" media="all" onload="this.media='all'" rel="stylesheet"/>
+<link href="/landing/cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="all" onload="this.media='all'" rel="stylesheet"/>
+<meta content="index, follow" name="robots"/>
+<style>.loadpilot-logo{font:bold 36px Arial,sans-serif;color:inherit;letter-spacing:-5px}.about__title .title-left,.about__title .title-right{width:auto;flex:1;display:flex}.about__title img{min-width:0;object-fit:contain}.about__title .title-left img{width:25%}.about__title .title-right img{width:20%}</style><style>.loadpilot-logo{color:#fff}.header:not(.header-inverse) .loadpilot-logo{color:#151515}.about__subtitle{font-family:AkkuratMonoLLWeb,monospace}</style><link href="/landing/favicon.svg" rel="icon" type="image/svg+xml"/><script defer="" src="/landing/resilience.js"></script><style>dotlottie-player:not([data-ready="true"]){visibility:hidden}</style></head>
+<body class="first-load false" id="body" style="background-color: rgb(0, 0, 0)">
+<div class="loader js-loader">
+<div class="loader__content js-loader-content">
+<div class="loader__curtain loader__curtain--top js-loader-curtain" style=""></div>
+<div class="loader__line js-loader-line" style=" transform-origin: 0% 50%"></div>
+<span class="loader__text text-small js-loader-text" style="">Loading...</span>
+<div class="loader__curtain loader__curtain--bottom js-loader-curtain" style=""></div>
+</div>
+</div>
+<header class="header js-header header-inverse" id="header" style="">
+<div class="header__container">
+<a class="header__logo js-nav-link-mobile" href="/" id="logo" style="">
+<span class="loadpilot-logo" direction="1" playmode="normal" speed="1" style="width: 125px; height: 28px">LP</span>
+<dotlottie-player autoplay="" class="logo__shape js-logo-shape" direction="1" loop="" playmode="normal" speed="1" src="https://hobro.digital/assets/video/logo-shapes.lottie" style="width: 20px; height: 20px">
+</dotlottie-player>
+</a>
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app" style=" pointer-events: none">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a>
+<nav class="header__navigation nav js-mobile-menu" data-lenis-prevent="">
+<div class="nav__container">
+<ul class="nav__list">
+<li class="nav__item nav-item-js" style="">
+<a class="nav__link cursor__trigger js-nav-cursor-hover js-nav-link-mobile" href="#projects">Scenarios</a>
+<a class="nav__link cursor__trigger js-nav-cursor-hover js-nav-link-mobile" href="#services">Capabilities</a>
+</li>
+<li class="nav__item nav-item-js" style="">
+<a class="nav__link cursor__trigger js-nav-cursor-hover js-nav-link-mobile" href="#agency">Workflow</a>
+</li>
+<li class="nav__item nav-item-js" style="">
+<a class="nav__link nav__link--contact cursor__trigger js-nav-cursor-hover js-nav-link-mobile" href="/app">Workspace</a>
+</li>
+</ul>
+<div class="visible-mobile">
+<div class="contact-links contact-links--short contact-links--inverse js-contact-links-mob">
+<svg class="contact-links__icon js-footer-icon-top" fill="none" height="22" width="43" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#a)">
+<path d="M42.538 21.47v-.231C42.515 9.684 33.335.014 21.271 0 9.268-.014-.023 9.638 0 21.304v.161h42.533l.005.005Zm-24.94-.78c.102-2.426.199-4.815.296-7.222h2.828v7.221h-3.128.004Zm.42-8.285c.153-1.266.306-2.48.444-3.65h2.264v3.65h-2.712.005Zm-1.297.019c-.786-.014-1.576-.005-2.463-.005.346-1.39.68-2.707 1.007-4.033.776.087 1.474.161 2.148.235-.134 1.188-.263 2.329-.388 3.465-.023.194-.046.342-.304.338Zm-3.212 8.182a46.43 46.43 0 0 1 .569-6.93c.014-.083.125-.213.19-.213.863-.014 1.727-.009 2.591-.009-.102 2.453-.199 4.847-.296 7.263H13.56c-.027-.055-.05-.083-.05-.106v-.005Zm-.314-8.215h-2.629c.43-1.529.984-2.97 1.691-4.347.037-.074.167-.167.24-.157.578.101 1.151.23 1.715.346-.342 1.405-.68 2.772-1.017 4.158ZM9.37 20.703c.004-2.462.305-4.86.882-7.235h2.694c-.19 2.416-.384 4.819-.573 7.235H9.365h.005Zm-.102-8.293c-.8.014-1.598.01-2.384.01-.014-.043-.028-.061-.023-.07.656-1.834 1.608-3.507 2.781-5.055.051-.069.218-.11.31-.088.439.111.873.245 1.257.36-.569 1.581-1.114 3.12-1.678 4.658-.032.088-.17.185-.258.185h-.005ZM5.202 20.6c.047-2.365.412-4.68 1.137-6.93.028-.088.13-.212.203-.212.869-.014 1.733-.01 2.523-.01l-.878 7.254H5.249c-.024-.05-.047-.074-.047-.102ZM2.786 13.46c.836-.014 1.673-.01 2.55-.01-.757 2.384-1.104 4.782-1.182 7.254H1.058c.042-.564.065-1.1.12-1.63a19.46 19.46 0 0 1 1.363-5.397c.037-.093.162-.208.25-.213l-.005-.004Zm4.957-7.06c.32.11.629.259.966.402a22.556 22.556 0 0 0-2.938 5.41c-.033.088-.167.199-.254.204-.781.013-1.567.009-2.361.009.004-.074 0-.12.013-.153a19.789 19.789 0 0 1 4.288-5.789c.065-.06.208-.106.286-.078v-.005ZM12 3.276c-.716.707-1.447 1.395-2.144 2.12-.555.573-.536.592-1.257.231-.023-.009-.037-.032-.13-.12 1.174-.78 2.33-1.543 3.485-2.31.013.028.032.051.046.079Zm2.749-.518c-.545.652-1.058 1.206-1.511 1.811-.462.62-.864 1.285-1.303 1.918-.05.07-.185.138-.263.12-.388-.088-.772-.203-1.206-.324 1.252-1.404 2.6-2.596 4.283-3.53v.005Zm2.388-.383c-.194.268-.42.522-.568.813-.628 1.229-1.224 2.467-1.848 3.696-.065.13-.231.314-.328.305-.5-.06-.989-.17-1.53-.277 1.105-1.871 2.44-3.442 4.279-4.537h-.005Zm2.033-.532c-.794 1.844-1.173 3.803-1.566 5.762l-1.945-.217c.795-2.14 1.75-4.09 3.511-5.55v.005Zm1.566 5.799h-2.088c.471-2.209.795-4.376 2.088-6.233v6.233Zm12.738 5.803c.721 0 1.507.014 2.292-.01.291-.009.42.088.476.365.319 1.567.679 3.128.956 4.7.13.71.111 1.45.157 2.19h-2.989c-.3-2.44-.596-4.829-.892-7.25v.005Zm-.19-1.035c-.1 0-.244-.148-.286-.259-.175-.48-.3-.98-.48-1.455-.393-1.03-.809-2.047-1.23-3.11.408-.12.81-.221 1.198-.36.254-.092.406-.028.54.199.689 1.164 1.405 2.31 2.07 3.483.263.462.43.975.665 1.511-.873 0-1.677.01-2.471-.014l-.005.005Zm-3.686 1.058h2.707c.569 2.398.878 4.796.887 7.226h-3.007a5674.27 5674.27 0 0 1-.587-7.226Zm-.231-1.058c-.337-1.39-.675-2.768-1.021-4.19.559-.116 1.095-.24 1.64-.32.106-.013.296.116.347.227.365.79.72 1.585 1.04 2.393.24.61.424 1.243.641 1.89h-2.647Zm-3.678 1.058h2.745c.397 2.398.591 4.805.61 7.244h-3.059c-.097-2.434-.199-4.832-.296-7.244Zm-.563-4.847 2.166-.235c.333 1.335.661 2.66.998 4.02h-2.702c-.157-1.28-.305-2.523-.458-3.785h-.004Zm-3.304 4.856h2.819c.101 2.426.198 4.824.3 7.235H21.82v-7.235Zm-.014-4.676 2.269-.106c.152 1.257.3 2.467.453 3.706h-2.722V8.8Zm.005-7.387c1.294 1.876 1.626 4.052 2.088 6.25h-2.088v-6.25Zm5.087 5.97c-.68.078-1.29.152-1.95.225-.383-2-.78-3.936-1.57-5.775 1.755 1.465 2.702 3.424 3.515 5.544l.005.005Zm2.781-.495c-.6.115-1.136.221-1.728.337-.651-1.76-1.423-3.419-2.546-4.902 1.825 1.127 3.142 2.717 4.274 4.565Zm-1.742-3.992c1.59.85 2.916 2.01 4.135 3.391-.425.12-.794.236-1.169.314-.092.019-.258-.041-.3-.115a21.682 21.682 0 0 0-2.661-3.59h-.005Zm6.127 2.68c-.558.24-1.024.154-1.4-.26-.065-.068-.13-.142-.199-.207-.647-.615-1.294-1.224-2.014-1.913 1.326.72 2.536 1.428 3.617 2.38h-.004Zm5.391 6.842c-.785 0-1.501-.014-2.213.01-.295.009-.43-.088-.536-.37a21.53 21.53 0 0 0-2.314-4.477l-.54-.79c.267-.116.498-.199.715-.32.273-.152.458-.092.684.13a21.083 21.083 0 0 1 3.802 4.995c.14.25.255.508.412.822h-.01Zm1.9 6.431c.073.61.092 1.225.138 1.848h-3.1c-.074-2.471-.444-4.87-1.183-7.249.822 0 1.594.014 2.366-.009.295-.01.397.111.498.36a20.736 20.736 0 0 1 1.285 5.05h-.005Z" fill="#151515"></path>
+</g>
+<defs>
+<clippath id="a">
+<path d="M0 0h42.538v21.47H0z" fill="#fff"></path>
+</clippath>
+</defs>
+</svg>
+<div class="contact-links__wrapper">
+<div class="contact-links__text text-small contact-links__text--address">
+<span>Run locally:</span>
+<span>Your device.<br/>Your target.<br/>Your test history.</span>
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a></div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small">
+<span>Workspace:</span>
+<a class="contact-link cursor__trigger" href="/app">Open workspace</a>
+</div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small">
+<span>Docs:</span>
+<a class="contact-link cursor__trigger" href="/docs">API documentation</a>
+</div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small">
+<span>Source:</span>
+<ul class="socials">
+<li class="socials__item">
+<a aria-label="GitHub" class="socials__link cursor__trigger" href="https://github.com/sandeeptjs/loadpilot">GitHub</a>
+</li>
+<li class="socials__item">
+<a aria-label="Docs" class="socials__link cursor__trigger" href="/docs">Docs</a>
+</li>
+<li class="socials__item">
+<a aria-label="Tests" class="socials__link cursor__trigger" href="/app">Tests</a>
+</li>
+<li class="socials__item">
+<a aria-label="Runs" class="socials__link cursor__trigger" href="/app">Runs</a>
+</li>
+<li class="socials__item">
+<a aria-label="Home" class="socials__link cursor__trigger" href="/">Home</a>
+</li>
+</ul>
+</div>
+</div>
+<svg class="contact-links__icon contact-links__icon-bottom js-footer-icon-bottom" fill="none" height="22" width="43" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#a)">
+<path d="M42.538 21.47v-.231C42.515 9.684 33.335.014 21.271 0 9.268-.014-.023 9.638 0 21.304v.161h42.533l.005.005Zm-24.94-.78c.102-2.426.199-4.815.296-7.222h2.828v7.221h-3.128.004Zm.42-8.285c.153-1.266.306-2.48.444-3.65h2.264v3.65h-2.712.005Zm-1.297.019c-.786-.014-1.576-.005-2.463-.005.346-1.39.68-2.707 1.007-4.033.776.087 1.474.161 2.148.235-.134 1.188-.263 2.329-.388 3.465-.023.194-.046.342-.304.338Zm-3.212 8.182a46.43 46.43 0 0 1 .569-6.93c.014-.083.125-.213.19-.213.863-.014 1.727-.009 2.591-.009-.102 2.453-.199 4.847-.296 7.263H13.56c-.027-.055-.05-.083-.05-.106v-.005Zm-.314-8.215h-2.629c.43-1.529.984-2.97 1.691-4.347.037-.074.167-.167.24-.157.578.101 1.151.23 1.715.346-.342 1.405-.68 2.772-1.017 4.158ZM9.37 20.703c.004-2.462.305-4.86.882-7.235h2.694c-.19 2.416-.384 4.819-.573 7.235H9.365h.005Zm-.102-8.293c-.8.014-1.598.01-2.384.01-.014-.043-.028-.061-.023-.07.656-1.834 1.608-3.507 2.781-5.055.051-.069.218-.11.31-.088.439.111.873.245 1.257.36-.569 1.581-1.114 3.12-1.678 4.658-.032.088-.17.185-.258.185h-.005ZM5.202 20.6c.047-2.365.412-4.68 1.137-6.93.028-.088.13-.212.203-.212.869-.014 1.733-.01 2.523-.01l-.878 7.254H5.249c-.024-.05-.047-.074-.047-.102ZM2.786 13.46c.836-.014 1.673-.01 2.55-.01-.757 2.384-1.104 4.782-1.182 7.254H1.058c.042-.564.065-1.1.12-1.63a19.46 19.46 0 0 1 1.363-5.397c.037-.093.162-.208.25-.213l-.005-.004Zm4.957-7.06c.32.11.629.259.966.402a22.556 22.556 0 0 0-2.938 5.41c-.033.088-.167.199-.254.204-.781.013-1.567.009-2.361.009.004-.074 0-.12.013-.153a19.789 19.789 0 0 1 4.288-5.789c.065-.06.208-.106.286-.078v-.005ZM12 3.276c-.716.707-1.447 1.395-2.144 2.12-.555.573-.536.592-1.257.231-.023-.009-.037-.032-.13-.12 1.174-.78 2.33-1.543 3.485-2.31.013.028.032.051.046.079Zm2.749-.518c-.545.652-1.058 1.206-1.511 1.811-.462.62-.864 1.285-1.303 1.918-.05.07-.185.138-.263.12-.388-.088-.772-.203-1.206-.324 1.252-1.404 2.6-2.596 4.283-3.53v.005Zm2.388-.383c-.194.268-.42.522-.568.813-.628 1.229-1.224 2.467-1.848 3.696-.065.13-.231.314-.328.305-.5-.06-.989-.17-1.53-.277 1.105-1.871 2.44-3.442 4.279-4.537h-.005Zm2.033-.532c-.794 1.844-1.173 3.803-1.566 5.762l-1.945-.217c.795-2.14 1.75-4.09 3.511-5.55v.005Zm1.566 5.799h-2.088c.471-2.209.795-4.376 2.088-6.233v6.233Zm12.738 5.803c.721 0 1.507.014 2.292-.01.291-.009.42.088.476.365.319 1.567.679 3.128.956 4.7.13.71.111 1.45.157 2.19h-2.989c-.3-2.44-.596-4.829-.892-7.25v.005Zm-.19-1.035c-.1 0-.244-.148-.286-.259-.175-.48-.3-.98-.48-1.455-.393-1.03-.809-2.047-1.23-3.11.408-.12.81-.221 1.198-.36.254-.092.406-.028.54.199.689 1.164 1.405 2.31 2.07 3.483.263.462.43.975.665 1.511-.873 0-1.677.01-2.471-.014l-.005.005Zm-3.686 1.058h2.707c.569 2.398.878 4.796.887 7.226h-3.007a5674.27 5674.27 0 0 1-.587-7.226Zm-.231-1.058c-.337-1.39-.675-2.768-1.021-4.19.559-.116 1.095-.24 1.64-.32.106-.013.296.116.347.227.365.79.72 1.585 1.04 2.393.24.61.424 1.243.641 1.89h-2.647Zm-3.678 1.058h2.745c.397 2.398.591 4.805.61 7.244h-3.059c-.097-2.434-.199-4.832-.296-7.244Zm-.563-4.847 2.166-.235c.333 1.335.661 2.66.998 4.02h-2.702c-.157-1.28-.305-2.523-.458-3.785h-.004Zm-3.304 4.856h2.819c.101 2.426.198 4.824.3 7.235H21.82v-7.235Zm-.014-4.676 2.269-.106c.152 1.257.3 2.467.453 3.706h-2.722V8.8Zm.005-7.387c1.294 1.876 1.626 4.052 2.088 6.25h-2.088v-6.25Zm5.087 5.97c-.68.078-1.29.152-1.95.225-.383-2-.78-3.936-1.57-5.775 1.755 1.465 2.702 3.424 3.515 5.544l.005.005Zm2.781-.495c-.6.115-1.136.221-1.728.337-.651-1.76-1.423-3.419-2.546-4.902 1.825 1.127 3.142 2.717 4.274 4.565Zm-1.742-3.992c1.59.85 2.916 2.01 4.135 3.391-.425.12-.794.236-1.169.314-.092.019-.258-.041-.3-.115a21.682 21.682 0 0 0-2.661-3.59h-.005Zm6.127 2.68c-.558.24-1.024.154-1.4-.26-.065-.068-.13-.142-.199-.207-.647-.615-1.294-1.224-2.014-1.913 1.326.72 2.536 1.428 3.617 2.38h-.004Zm5.391 6.842c-.785 0-1.501-.014-2.213.01-.295.009-.43-.088-.536-.37a21.53 21.53 0 0 0-2.314-4.477l-.54-.79c.267-.116.498-.199.715-.32.273-.152.458-.092.684.13a21.083 21.083 0 0 1 3.802 4.995c.14.25.255.508.412.822h-.01Zm1.9 6.431c.073.61.092 1.225.138 1.848h-3.1c-.074-2.471-.444-4.87-1.183-7.249.822 0 1.594.014 2.366-.009.295-.01.397.111.498.36a20.736 20.736 0 0 1 1.285 5.05h-.005Z" fill="#151515"></path>
+</g>
+<defs>
+<clippath id="a">
+<path d="M0 0h42.538v21.47H0z" fill="#fff"></path>
+</clippath>
+</defs>
+</svg>
+</div>
+</div>
+<div class="visible-mobile nav__bottom">
+<a class="text-small js-nav-link-mobile" href="/docs">API documentation</a>
+</div>
+</div>
+</nav>
+<button class="header__btn-mobile visible-mobile" id="btn-mobile">
+<span class="header__btn-line"></span>
+<span class="header__btn-line"></span>
+<span class="header__btn-line"></span>
+</button>
+</div>
+</header>
+<main id="content" style="background-color: rgb(255, 255, 255)">
+<section class="about js-about" style="--capabilities-cta-height: 133px">
+<div class="container about__container">
+<div class="about__column about__headline">
+<div class="title__box">
+<h1 class="hidden">LOADPILOT</h1>
+<div class="about__title title about-title-js">
+<div class="title-left title-left-js"><img alt="L" src="/landing/hobro.digital/assets/icons/letterL.svg"/><img alt="O" src="/landing/hobro.digital/assets/icons/letterO2.svg"/><img alt="A" src="/landing/hobro.digital/assets/icons/letterA.svg"/><img alt="D" src="/landing/hobro.digital/assets/icons/letterD.svg"/></div>
+<div class="title-right title-right-js"><img alt="P" src="/landing/hobro.digital/assets/icons/letterP.svg"/><img alt="I" src="/landing/hobro.digital/assets/icons/letterI.svg"/><img alt="L" src="/landing/hobro.digital/assets/icons/letterL.svg"/><img alt="O" src="/landing/hobro.digital/assets/icons/letterO2.svg"/><img alt="T" src="/landing/hobro.digital/assets/icons/letterT.svg"/></div>
+</div>
+</div>
+<div class="about__text">
+<div class="about__subtitle subtitle about-subtitle-js" style="">AUTONOMOUS PERFORMANCE TESTING<br/>BASELINE · SOAK · STRESS<br/>LOADPILOT</div>
+</div>
+<dotlottie-player class="about__lottie about-lottie-js" direction="1" playmode="normal" speed="1" src="https://hobro.digital/media/video/HeroElement.lottie" style="width: 42px; height: 22px">
+</dotlottie-player>
+</div>
+<div class="about__column about__column-cta">
+<div class="capabilities-cta-hero cch" style="">
+<img alt="background-image" aria-hidden="true" class="cch__background-image" src="/landing/hobro.digital/assets/images/capabilities/capabilities-1.webp"/>
+<div class="cch__body">
+<h3 class="cch__title" style="">Describe your workload.<br/>Put your application to the test.</h3>
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app" style="">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a>
+<button class="cch__close-button cursor__trigger" style="" type="button"></button>
+</div>
+</div>
+</div>
+<div class="about__video--cover" style=""></div>
+<video class="about__video js-first-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/hero-poster.webp" preload="none" style="" webkit-playsinline="" width="100%">
+<source media="(min-width: 1367px)" src="https://hobro.digital/media/video/4K-Hobro-Hero.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(min-width: 1367px)" src="https://hobro.digital/media/video/4K-Hobro-Hero.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+<source media="(min-width: 769px) and (max-width: 1366px)" src="https://hobro.digital/media/video/HeroIpad.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(min-width: 769px) and (max-width: 1366px)" src="https://hobro.digital/media/video/HeroIpad.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(max-width: 768px)" src="https://hobro.digital/media/video/Mobile-Hobro-Hero.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(max-width: 768px)" src="https://hobro.digital/media/video/Mobile-Hobro-Hero.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+            Your browser does not support the video tag.
+        </video>
+</div>
+</section>
+<section class="stickers stickers-box-js">
+<div class="container">
+<div class="stickers__content">
+<div class="stickers__subtitle subtitle stickers-subtitle-js" style="">Turn your performance requirements into realistic test data, executable workloads, and results you can inspect.</div>
+<p class="stickers__text text">LoadPilot brings scenario planning, payload generation, k6 execution, and run analysis into one workspace. Start locally with offline parsing, or configure an OpenAI-compatible provider for AI intent extraction and summaries.</p>
+<div class="stickers__box">
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker1.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker2.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker3.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker4.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker5.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker6.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker7.svg" style=""/>
+<img alt="" class="stickers__img sticker-js" loading="lazy" src="/landing/hobro.digital/assets/icons/sticker8.svg" style=""/>
+</div>
+<div class="stickers__words text-small">
+<div class="stickers__words-row">
+<span class="stickers-word-js" style="">Vision.</span>
+<span class="stickers-word-js" style="">Clarity.</span>
+</div>
+<div class="stickers__words-row">
+<span class="stickers-word-js" style="">Flow.</span>
+<span class="stickers-word-js" style="">Execution.</span>
+</div>
+</div>
+</div>
+<div class="cta">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg" style=""/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg" style=""/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Got a workload?</span>
+<dotlottie-player autoplay="" class="cta__lottie lazy-lottie" direction="1" loop="" playmode="normal" speed="1" src="https://hobro.digital/assets/video/btn-lets-talk.lottie">
+</dotlottie-player>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg" style=""/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg" style=""/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+<div class="cta__hint" style="">
+<span class="text-small"><span class="hidden-desktop">Tap To </span> START " <img alt="" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-plus.svg"/>  "</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="wwd" id="services">
+<h2 class="wwd__title"><div class="title title--cursive wwd-title-js">What</div><div class="title wwd-title-js">We</div><div class="title wwd-title-js">TEST</div></h2>
+<div class="wwd__text text js-wwd-text">
+<span class="wwd__text-inner" style="">Test the journeys your users depend on. Find slow responses, failed requests, and the point where your application reaches its limit.</span>
+<span class="wwd__text-cursor">|</span>
+</div>
+<div class="container wwd__container">
+<div class="wwd__services">
+<ul class="wwd__list">
+<li class="wwd__item">Baseline tests</li>
+<li class="wwd__item">Soak tests</li>
+<li class="wwd__item">Stress tests</li>
+<li class="wwd__item">Spike tests</li>
+<li class="wwd__item">Breakpoint search</li>
+</ul>
+<ul class="wwd__list">
+<li class="wwd__item">HTTP journeys</li>
+<li class="wwd__item">OpenAPI specifications</li>
+<li class="wwd__item">GraphQL requests</li>
+<li class="wwd__item">Authentication</li>
+<li class="wwd__item">Multipart uploads</li>
+</ul>
+<ul class="wwd__list">
+<li class="wwd__item">Schema-valid data</li>
+<li class="wwd__item">Runtime bindings</li>
+<li class="wwd__item">Conditional steps</li>
+<li class="wwd__item">Read polling</li>
+<li class="wwd__item">Preflight checks</li>
+</ul>
+<ul class="wwd__list">
+<li class="wwd__item">Scheduled runs</li>
+<li class="wwd__item">Live metrics</li>
+<li class="wwd__item">Failure diagnostics</li>
+<li class="wwd__item">Run comparisons</li>
+<li class="wwd__item">Audited recovery</li>
+</ul>
+</div>
+<div class="lines wwd__lines">
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.53"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.43"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.33"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.20"></path>
+</svg>
+</div>
+</div>
+<div class="container">
+<div class="wwd__dots js-dots-box" data-quotes='["Review the generated plan before execution.", "Preflight requests before applying load.", "Use real k6 measurements.", "Keep each run and its artifacts.", "Compare results across runs.", "Scope recovery to approved actions."]'>
+<div class="wwd__hint js-dots-hint" style="">
+<button aria-label="Close button" class="tooltip__button hidden-desktop js-tooltip-close-btn" type="button"></button>
+<div class="js-wwd-hint-text"><span class="hidden-desktop">Tap To </span><span class="visible-desktop">hover</span> " <span class="wwd__hint-dot"></span> "</div>
+<div class="tooltip__title js-wwd-tooltip-title">LOADPILOT WORKFLOW</div>
+<div class="tooltip__quote js-wwd-tooltip-quote"></div>
+</div>
+<svg class="dots js-dots-svg" fill="none" height="635" viewbox="0 0 554 635" width="100%" xmlns="http://www.w3.org/2000/svg">
+<circle cx="37.9955" cy="6.12832" data-svg-origin="308.86717796325684 317.5" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,3.7566,110.2834)"></circle>
+<circle cx="6.12832" cy="45.3495" data-svg-origin="277 356.7211799621582" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,710.7321,21.1974)"></circle>
+<circle cx="37.9955" cy="45.3495" data-svg-origin="308.86717796325684 356.7211799621582" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,238.4217,99.0976)"></circle>
+<circle cx="74.765" cy="25.7389" data-svg-origin="345.63668060302734 337.1105785369873" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-812.3451,-57.15)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="74.765" cy="25.7389" fill="none" r="70"></circle>
+<circle cx="111.535" cy="45.3495" data-svg-origin="382.4066848754883 356.7211799621582" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,112.0139,-57.15)"></circle>
+<circle cx="474.331" cy="45.3495" data-svg-origin="745.2026672363281 356.7211799621582" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-9.6985,73.6764)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="474.331" cy="45.3495" fill="none" r="70"></circle>
+<circle cx="442.464" cy="158.111" data-svg-origin="713.3356628417969 469.482666015625" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-928.1181,-46.3976)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="442.464" cy="158.111" fill="none" r="70"></circle>
+<circle cx="442.464" cy="302.739" data-svg-origin="713.3356628417969 614.1106872558594" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-900.8408,-4.791)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="442.464" cy="302.739" fill="none" r="70"></circle>
+<circle cx="442.464" cy="420.403" data-svg-origin="713.3356628417969 731.7746887207031" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,625.2472,-28.1244)"></circle>
+<circle cx="442.464" cy="449.819" data-svg-origin="713.3356628417969 761.190673828125" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,709.3528,-57.15)"></circle>
+<circle cx="442.464" cy="481.686" data-svg-origin="713.3356628417969 793.0576782226562" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-762.5493,117.6207)"></circle>
+<circle cx="442.464" cy="542.969" data-svg-origin="713.3356628417969 854.3406982421875" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,562.8788,20.6825)"></circle>
+<circle cx="442.464" cy="569.933" data-svg-origin="713.3356628417969 881.3046875" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-605.3086,-53.0043)"></circle>
+<circle cx="278.226" cy="584.641" data-svg-origin="549.0976867675781 896.0126953125" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,30.9763,-1.7091)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="278.226" cy="584.641" fill="none" r="70"></circle>
+<circle cx="189.978" cy="584.641" data-svg-origin="460.84967041015625 896.0126953125" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,857.0092,-57.15)"></circle>
+<circle cx="189.978" cy="427.757" data-svg-origin="460.84967041015625 739.128662109375" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,643.2414,-57.15)"></circle>
+<circle cx="189.978" cy="354.217" data-svg-origin="460.84967041015625 665.5886840820312" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-843.9791,109.1859)"></circle>
+<circle cx="364.023" cy="354.217" data-svg-origin="634.8946838378906 665.5886840820312" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-102.1434,-57.15)"></circle>
+<circle cx="275.775" cy="314.996" data-svg-origin="546.6466674804688 626.36767578125" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,75.6489,118.1509)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="275.775" cy="314.996" fill="none" r="70"></circle>
+<circle cx="364.023" cy="427.757" data-svg-origin="634.8946838378906 739.128662109375" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,795.8853,23.4327)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="364.023" cy="427.757" fill="none" r="70"></circle>
+<circle cx="464.527" cy="569.933" data-svg-origin="735.398681640625 881.3046875" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-623.958,3.1263)"></circle>
+<circle cx="516.005" cy="542.969" data-svg-origin="786.8766784667969 854.3406982421875" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-744.3039,-57.15)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="516.005" cy="542.969" fill="none" r="70"></circle>
+<circle cx="516.005" cy="481.686" data-svg-origin="786.8766784667969 793.0576782226562" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-472.7973,63.8427)"></circle>
+<circle cx="516.005" cy="302.739" data-svg-origin="786.8766784667969 614.1106872558594" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-397.7205,48.6326)"></circle>
+<circle cx="516.005" cy="356.668" data-svg-origin="786.8766784667969 668.0396728515625" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,656.7466,66.4539)"></circle>
+<circle cx="516.005" cy="398.341" data-svg-origin="786.8766784667969 709.7126770019531" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-629.1855,-48.4751)"></circle>
+<circle cx="481.685" cy="427.757" data-svg-origin="752.5566711425781 739.128662109375" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-596.8803,112.2744)"></circle>
+<circle cx="547.872" cy="45.3495" data-svg-origin="818.7437133789062 356.7211799621582" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,279.0532,-57.15)"></circle>
+<circle cx="516.005" cy="158.111" data-svg-origin="786.8766784667969 469.482666015625" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-477.2465,67.7185)"></circle>
+<circle cx="246.359" cy="123.792" data-svg-origin="517.2306671142578 435.16368103027344" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-61.2664,-57.15)"></circle>
+<circle cx="246.359" cy="194.881" data-svg-origin="517.2306671142578 506.25267028808594" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,892.6377,99.0608)"></circle>
+<circle cx="37.9955" cy="158.111" data-svg-origin="308.86717796325684 469.482666015625" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-613.3786,-43.4822)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="37.9955" cy="158.111" fill="none" r="70"></circle>
+<circle cx="111.535" cy="158.111" data-svg-origin="382.4066848754883 469.482666015625" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,21.5583,-57.15)"></circle>
+<circle cx="82.1186" cy="167.916" data-svg-origin="352.9902801513672 479.2876739501953" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,912.1932,60.1814)"></circle>
+<circle cx="50.2514" cy="263.517" data-svg-origin="321.1230812072754 574.888671875" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,610.5664,-57.15)"></circle>
+<circle cx="37.9955" cy="361.571" data-svg-origin="308.86717796325684 672.9426879882812" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,156.1084,-48.3132)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="37.9955" cy="361.571" fill="none" r="70"></circle>
+<circle cx="37.9955" cy="425.305" data-svg-origin="308.86717796325684 736.6766662597656" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,348.4371,87.5087)"></circle>
+<circle cx="37.9955" cy="508.65" data-svg-origin="308.86717796325684 820.0216674804688" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-195.5447,77.2424)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="37.9955" cy="508.65" fill="none" r="70"></circle>
+<circle cx="111.535" cy="538.066" data-svg-origin="382.4066848754883 849.4376831054688" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,472.2606,75.0004)"></circle>
+<circle cx="111.535" cy="508.65" data-svg-origin="382.4066848754883 820.0216674804688" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,528.1884,107.8761)"></circle>
+<circle cx="111.535" cy="481.686" data-svg-origin="382.4066848754883 793.0576782226562" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,141.0346,-57.15)"></circle>
+<circle cx="111.535" cy="425.305" data-svg-origin="382.4066848754883 736.6766662597656" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-198.4736,108.1131)"></circle>
+<circle cx="111.535" cy="408.146" data-svg-origin="382.4066848754883 719.5176696777344" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,175.0842,-57.15)"></circle>
+<circle cx="111.535" cy="361.571" data-svg-origin="382.4066848754883 672.9426879882812" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,527.0394,106.4784)"></circle>
+<circle cx="111.535" cy="310.093" data-svg-origin="382.4066848754883 621.4646606445312" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,392.573,6.8583)"></circle>
+<circle cx="118.89" cy="290.482" data-svg-origin="389.76168060302734 601.8536682128906" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,67.9446,103.3622)"></circle>
+<circle cx="275.775" cy="123.792" data-svg-origin="546.6466674804688 435.16368103027344" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-649.6575,-57.15)"></circle>
+<circle class="cursor__trigger js-dots-item" cx="275.775" cy="123.792" fill="none" r="70"></circle>
+<circle cx="275.775" cy="194.881" data-svg-origin="546.6466674804688 506.25267028808594" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,702.9786,18.0379)"></circle>
+<circle cx="275.775" cy="243.907" data-svg-origin="546.6466674804688 555.2786712646484" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,438.9541,-24.3254)"></circle>
+<circle cx="305.191" cy="123.792" data-svg-origin="576.0626831054688 435.16368103027344" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-219.944,106.4789)"></circle>
+<circle cx="305.191" cy="194.881" data-svg-origin="576.0626831054688 506.25267028808594" fill="#151515" r="6.12832" style=" transform-origin: 0px 0px" transform="matrix(1,0,0,1,-253.3389,-57.15)"></circle>
+</svg>
+</div>
+</div>
+</section>
+<section class="features">
+<div class="features__container container">
+<div class="features__list">
+<div class="feature is-active">
+<div class="feature__frame feature-content-js" data-video="#video-brand">
+<div class="feature__bg" style=""></div>
+<div class="feature__content">
+<div class="feature__text feature__text--top">
+<span class="feature__number">(01)</span>
+<div class="feature__subtitle subtitle">Intent</div>
+</div>
+<div class="feature__text feature__text--bottom" style="">
+<span class="feature__number" style="">requirements</span>
+<div class="feature__subtitle subtitle">Intent</div>
+<span class="feature__number" style="">scenarios</span>
+</div>
+</div>
+</div>
+</div>
+<div class="feature">
+<div class="feature__frame feature-content-js" data-video="#video-design">
+<div class="feature__bg" style=""></div>
+<div class="feature__content">
+<div class="feature__text feature__text--top">
+<span class="feature__number">(02)</span>
+<div class="feature__subtitle subtitle">Data &amp; scripts</div>
+</div>
+<div class="feature__text feature__text--bottom" style="">
+<span class="feature__number" style="">payloads</span>
+<div class="feature__subtitle subtitle">Data &amp; scripts</div>
+<span class="feature__number" style="">bindings</span>
+</div>
+</div>
+</div>
+</div>
+<div class="feature">
+<div class="feature__frame feature-content-js" data-video="#video-web">
+<div class="feature__bg" style=""></div>
+<div class="feature__content">
+<div class="feature__text feature__text--top">
+<span class="feature__number">(03)</span>
+<div class="feature__subtitle subtitle">Run &amp; monitor</div>
+</div>
+<div class="feature__text feature__text--bottom" style="">
+<span class="feature__number" style="">latency</span>
+<div class="feature__subtitle subtitle">Run &amp; monitor</div>
+<span class="feature__number" style="">throughput</span>
+</div>
+</div>
+</div>
+</div>
+<div class="feature">
+<div class="feature__frame feature-content-js" data-video="#video-3d">
+<div class="feature__bg" style=""></div>
+<div class="feature__content">
+<div class="feature__text feature__text--top">
+<span class="feature__number">(04)</span>
+<div class="feature__subtitle subtitle">Results</div>
+</div>
+<div class="feature__text feature__text--bottom" style="">
+<span class="feature__number" style="">diagnostics</span>
+<div class="feature__subtitle subtitle">Results</div>
+<span class="feature__number" style="">comparisons</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="features__videos js-features-videos" style=" transform-origin: 50% 50%; perspective: 800px">
+<div class="feature__video-item" id="video-brand" style="background-image: url(/assets/images/feature-poster-mgroup.webp)">
+<video autoplay="" class="feature__video lazyvideo" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/feature-poster-mgroup.webp" preload="none">
+<source data-src="https://hobro.digital/media/video/features-mgroup.h265.mp4" src="https://hobro.digital/media/video/features-mgroup.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/features-mgroup.av1.mp4" src="https://hobro.digital/media/video/features-mgroup.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                Your browser does not support the video tag.
+            </video>
+</div>
+<div class="feature__video-item" id="video-design" style="background-image: url(/assets/images/feature-poster2.webp)">
+<video autoplay="" class="feature__video lazyvideo" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/feature-poster2.webp" preload="none">
+<source data-src="https://hobro.digital/media/video/features2.h265.mp4" src="https://hobro.digital/media/video/features2.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/features2.av1.mp4" src="https://hobro.digital/media/video/features2.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                Your browser does not support the video tag.
+            </video>
+</div>
+<div class="feature__video-item" id="video-web" style="background-image: url(/assets/images/feature-poster4.webp)">
+<video autoplay="" class="feature__video lazyvideo" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/feature-poster4.webp" preload="none">
+<source data-src="https://hobro.digital/media/video/features5.h265.mp4" src="https://hobro.digital/media/video/features5.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/features5.av1.mp4" src="https://hobro.digital/media/video/features5.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                Your browser does not support the video tag.
+            </video>
+</div>
+<div class="feature__video-item" id="video-3d" style="background-image: url(/assets/images/feature-poster5.webp)">
+<video autoplay="" class="feature__video lazyvideo" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/feature-poster5.webp" preload="none">
+<source data-src="https://hobro.digital/media/video/features4.h265.mp4" src="https://hobro.digital/media/video/features4.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/features4.av1.mp4" src="https://hobro.digital/media/video/features4.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                Your browser does not support the video tag.
+            </video>
+</div>
+</div>
+<div class="features-cta">
+<div class="features-cta__container">
+<div class="features-cta__body">
+<div class="features-cta__image-wrapper">
+<img alt="decor" aria-hidden="true" class="features-cta__img-item --background" src="/landing/hobro.digital/assets/images/features/background-image.webp"/>
+<img alt="decor" aria-hidden="true" class="features-cta__img-item --icon --static-icon" src="/landing/hobro.digital/assets/images/features/decor-circle.svg"/>
+<dotlottie-player autoplay="" class="features-cta__img-item --icon --lottie-icon" direction="1" loop="" playmode="normal" speed="1" src="https://hobro.digital/assets/video/logo-shapes.lottie">
+</dotlottie-player>
+</div>
+<div class="features-cta__content-wrapper">
+<h3 class="features-cta__title">Describe your workload.<br/>Put your application to the test.</h3>
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a>
+</div>
+</div>
+</div>
+</div>
+<div class="lines">
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+<svg class="js-svg-line" fill="none" height="28" viewbox="0 0 3000 28" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M3000 13.8409 L0 13.8409" stroke="#414141" stroke-opacity="0.23"></path>
+</svg>
+</div>
+</section>
+<section class="cases" data-scroll-margin-top="48px" id="projects">
+<div class="container">
+<div class="cases__latest js-cases-item js-latest-case" data-popup="popup-case-1">
+<div class="latest__container">
+<div class="latest__panel">
+<h3 class="cases__title"><span class="title-secondary title-secondary--cursive title-secondary-js">Test</span><span class="title-secondary title-secondary-js">Stories</span></h3>
+</div>
+<div class="latest__panel latest__panel--cover">
+<div class="latest__bg cursor__trigger js-latest-case-bg">
+<video autoplay="" class="latest__video lazyvideo autoplay" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-brinc-bg.webp" preload="none">
+<source data-src="https://hobro.digital/media/video/cases/case-brinc-bg.hevc.mp4" src="https://hobro.digital/media/video/cases/case-brinc-bg.hevc.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-brinc-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-brinc-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<h3 class="cases__title"><span class="title-secondary title-secondary--cursive title-secondary-js">Test</span><span class="title-secondary title-secondary-js">Stories</span></h3>
+</div>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small">CHECKOUT STRESS</span>
+</div>
+</div>
+<div class="cases__header">
+<h3 class="title-secondary">Scenario examples</h3>
+<ul class="stack__list">
+<li class="text-small">BASELINE</li>
+<li class="text-small">STRESS</li>
+<li class="text-small">SOAK</li>
+</ul>
+</div>
+<div class="cases__list js-cases-list">
+Catalog baseline
+<div class="cases__item">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-2">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 100%; --clip-right: 0%; --clip-top: 0%">
+<img alt="Bridge Health" class="cases__image" src="/landing/hobro.digital/media/images/cases/case-bridge-health-bg.webp"/>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Catalog baseline</span>
+</div>
+</div>
+</div>
+Checkout stress
+<div class="cases__item">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-3">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 100%; --clip-right: 100%; --clip-top: 0%; --clip-radius: 0px">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-liveops-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-liveops-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-liveops-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-liveops-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-liveops-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Checkout stress</span>
+</div>
+</div>
+</div>
+Search soak
+<div class="cases__item cases__item--align-right">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-4">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 0%; --clip-right: 100%; --clip-top: 100%">
+<img alt="" class="cases__image" src="/landing/hobro.digital/media/images/cases/case-dv-bg.webp"/>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Search soak</span>
+</div>
+</div>
+</div>
+Cart journey
+<div class="cases__item cases__item--align-top">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-5">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 0%; --clip-right: 0%; --clip-top: 100%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-alva-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-alva-bg.hevc.mp4" src="https://hobro.digital/media/video/cases/case-alva-bg.hevc.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-alva-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-alva-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Cart journey</span>
+</div>
+</div>
+</div>
+Login flow
+<div class="cases__item cases__item--align-bottom">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-6">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 100%; --clip-right: 0%; --clip-top: 0%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-mgroup-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-mgroup-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-mgroup-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Login flow</span>
+</div>
+</div>
+</div>
+Ticket creation
+<div class="cases__item cases__item--align-center cases__item--align-right">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-7">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 100%; --clip-right: 100%; --clip-top: 0%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-summit-bg.avif" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-summit-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-summit-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-summit-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-summit-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Ticket creation</span>
+</div>
+</div>
+</div>
+<div class="cases__item">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-8">
+<div class="cases__asset cases__asset--contain js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 0%; --clip-right: 100%; --clip-top: 100%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-ybcc-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-ybcc-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-ybcc-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">API breakpoint</span>
+</div>
+</div>
+</div>
+Upload workflow 
+<div class="cases__item">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-9">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 0%; --clip-right: 0%; --clip-top: 100%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-baselayer-bg.avif" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-baselayer-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-baselayer-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Upload workflow</span>
+</div>
+</div>
+</div>
+GraphQL queries
+<div class="cases__item cases__item--align-right">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-10">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 100%; --clip-right: 0%; --clip-top: 0%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-caviar-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-caviar-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-caviar-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-caviar-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-caviar-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">GraphQL queries</span>
+</div>
+</div>
+</div>
+Read polling
+<div class="cases__item cases__item--align-top">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-11">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 100%; --clip-right: 100%; --clip-top: 0%">
+<img alt="" class="cases__image" src="/landing/hobro.digital/media/images/cases/case-vertigo-bg.webp"/>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Read polling</span>
+</div>
+</div>
+</div>
+Conditional steps
+<div class="cases__item">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-12">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 0%; --clip-bottom: 0%; --clip-right: 100%; --clip-top: 100%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-digital-bg.avif" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-digital-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-digital-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-digital-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-digital-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Conditional steps</span>
+</div>
+</div>
+</div>
+<div class="cases__item cases__item--align-center cases__item--align-right">
+<div class="cases__subitem cases__subitem--big js-cases-item js-subcase cursor__trigger" data-popup="popup-case-13">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 0%; --clip-right: 0%; --clip-top: 100%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-olive-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-olive-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-olive-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-olive-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-olive-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Payload datasets</span>
+</div>
+</div>
+</div>
+Scheduled baseline
+<div class="cases__item cases__item--center-column">
+<div class="cases__subitem cases__subitem--small js-cases-item js-subcase cursor__trigger" data-popup="popup-case-14">
+<div class="cases__asset js-case-asset cases__asset--clip" style=" --clip-left: 100%; --clip-bottom: 100%; --clip-right: 0%; --clip-top: 0%">
+<video class="case__video lazyvideo js-case-video" data-play="false" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-nft-bg.webp" preload="metadata">
+<source data-src="https://hobro.digital/media/video/cases/case-nft-bg.h265.mp4" src="https://hobro.digital/media/video/cases/case-nft-bg.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="https://hobro.digital/media/video/cases/case-nft-bg.av1.mp4" src="https://hobro.digital/media/video/cases/case-nft-bg.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                            Your browser does not support the video tag.
+                        </video>
+</div>
+<div class="cases__description">
+<span class="cases__name text-small js-case-name" style="">Scheduled baseline</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="cta cta--inverse">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Got a workload?</span>
+<dotlottie-player autoplay="" class="cta__lottie lazy-lottie" direction="1" loop="" playmode="normal" speed="1" src="https://hobro.digital/assets/video/btn-lets-talk.lottie">
+</dotlottie-player>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+<div class="cta__hint" style="">
+<span class="text-small"><span class="hidden-desktop">Tap To </span> START " <img alt="" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-plus.svg"/>  "</span>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-1" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Checkout stress</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li><li class="tags__item text-small">WORKFLOW</li><li class="tags__item text-small">SCENARIO</li><li class="tags__item text-small">SOCIAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-brinc2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-brinc2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-brinc2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-brinc1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-brinc1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-brinc1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-brinc3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-brinc3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-brinc3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-brinc4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-brinc4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-brinc4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-2" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Catalog baseline</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-bridge-health-1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-bridge-health-2.webp"/>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-bridge-health-3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-bridge-health-4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-bridge-health-4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-3" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Checkout journey</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-liveops1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-liveops1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-liveops1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-liveops2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-liveops2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-liveops2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-liveops3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-liveops3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-liveops3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-liveops4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-liveops4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-liveops4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-4" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Search soak</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li><li class="tags__item text-small">WORKFLOW</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-dv1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-dv1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-dv1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-dv2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-dv2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-dv2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-dv3.webp"/>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-dv4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-dv4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-dv4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-5" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Cart creation</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-alva1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-alva1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-alva1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-alva2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-alva2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-alva2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-alva3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-alva3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-alva3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-alva4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-alva4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-alva4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-6" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Authentication</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-mgroup1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-mgroup2.webp"/>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-mgroup3.webp"/>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-mgroup4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-mgroup4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-7" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Ticket creation</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-summit1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-summit1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-summit1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-summit2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-summit2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-summit2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-summit3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-summit3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-summit3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-summit4.webp"/>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-8" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">API breakpoint</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li><li class="tags__item text-small">WORKFLOW</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-ybcc1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-ybcc2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-ybcc3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-ybcc4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-ybcc4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-9" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Upload workflow</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-baselayer1.webp"/>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-baselayer2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-baselayer3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-baselayer3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-baselayer4.webp"/>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-10" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">GraphQL queries</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-caviar1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-caviar1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-caviar1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-caviar2.webp"/>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-caviar3.webp"/>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-caviar4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-caviar4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-caviar4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-11" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Read polling</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li><li class="tags__item text-small">WORKFLOW</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-vertigo1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-vertigo1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-vertigo1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-vertigo2.webp"/>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-vertigo3.webp"/>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-vertigo4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-vertigo4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-vertigo4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-12" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Conditional steps</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-digital1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-digital1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-digital1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-digital2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-digital2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-digital2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-digital3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-digital3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-digital3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-digital4.webp"/>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-13" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Payload datasets</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-olive1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-olive1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-olive1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-olive2.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-olive2.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-olive2.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-oliva3.webp"/>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-olive4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-olive4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-olive4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="popup js-popup" data-case="popup-case-14" data-lenis-prevent="" style="">
+<div class="popup-scroll-container js-popup-scroll-container">
+<div class="popup__top">
+<button aria-label="Close popup" class="popup__close-btn js-close-popup-btn cursor__trigger" style="" type="button">
+<img alt="Close icon" src="/landing/hobro.digital/assets/icons/icon-close.svg"/>
+</button>
+</div>
+<div class="container popup__container">
+<div class="popup__header js-popup-header">
+<div class="popup__description">
+<div class="popup__title title-secondary">Scheduled baseline</div>
+<div class="popup__text text"><p>Describe the requests, expected responses, and load pattern for this workflow. LoadPilot prepares data and an executable k6 plan for review, then tracks latency, errors, and throughput during the run.<br/><br/>This is a scenario example, not a published benchmark. The supplied artwork illustrates the page; run results come from your own target.</p><p><a href="/app">Create this kind of test →</a></p></div>
+</div>
+<div class="popup__tags">
+<ul class="tags__list">
+<li class="tags__item text-small">HTTP</li><li class="tags__item text-small">TEST DATA</li><li class="tags__item text-small">K6</li><li class="tags__item text-small">METRICS</li><li class="tags__item text-small">CHECKS</li><li class="tags__item text-small">EVIDENCE</li><li class="tags__item text-small">REPORT</li><li class="tags__item text-small">LOCAL</li>
+</ul>
+</div>
+</div>
+<div class="popup__button js-popup-link">
+<div class="cta cta--popup">
+<div class="cta__content">
+<a class="cta__link" href="/app" id="cta-link">
+<div class="cta__arcs cta__arcs--left">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+<div class="cta__text">
+<span>Let’s talk</span>
+</div>
+<div class="cta__arcs cta__arcs--right">
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+<img alt="" class="cta__arc" loading="lazy" src="/landing/hobro.digital/assets/icons/icon-arc.svg"/>
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="popup__images">
+<div class="popup-scroll-content js-popup-scroll-content">
+<ul class="gallery">
+<li class="gallery__item gallery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-nft1.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-nft1.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-nft1.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item gallery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<img alt="" class="gallery__image" loading="lazy" src="/landing/hobro.digital/media/images/cases/case-nft2.webp"/>
+</li>
+<li class="gallery__item galery__item--video">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-nft3.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-nft3.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-nft3.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+<li class="gallery__item galery__item--image">
+<div class="gallery__item--cover">
+<span class="js-popup-curtain" style=""></span>
+<span class="js-popup-curtain" style=""></span></div>
+<video autoplay="" class="gallery__video js-popup-video" loop="" muted="" playsinline="" poster="https://hobro.digital/media/images/cases/case-nft4.webp" preload="none" width="100%">
+<source data-src="https://hobro.digital/media/video/cases/case-nft4.h265.mp4" type="video/mp4"/>
+<source data-src="https://hobro.digital/media/video/cases/case-nft4.av1.mp4" type="video/webm; codecs=av01.0.05M.08,opus"/>
+                                Your browser does not support the video tag.
+                            </video>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section class="aims" id="agency">
+<div class="aims__bg">
+<video autoplay="" class="aims__video autoplay" loop="" muted="" playsinline="" preload="none">
+<source media="(min-width: 1367px)" src="https://hobro.digital/media/video/flowers.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(min-width: 1367px)" src="https://hobro.digital/media/video/flowers.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+<source media="(min-width: 769px) and (max-width: 1366px)" src="https://hobro.digital/media/video/VisionIpad.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(min-width: 769px) and (max-width: 1366px)" src="https://hobro.digital/media/video/VisionIpad.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(max-width: 768px)" src="https://hobro.digital/media/video/VisionMobile.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source media="(max-width: 768px)" src="https://hobro.digital/media/video/VisionMobile.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+            Your browser does not support the video tag.
+        </video>
+</div>
+<div class="aims__container container">
+<h2 class="aims__title title title--cursive js-aims-title" style="">Clear evidence</h2>
+<div class="aims__subtitle title-secondary js-aims-subtitle" style="">Performance testing should begin with a question and end with evidence. LoadPilot connects the workload you describe to the requests that ran, the checks that passed, and the limits you reached.</div>
+<div class="aims__small-title subtitle js-aims-small-subtitle" style="">Make performance an experiment you can repeat. Start with bounded workloads, keep the generated artifacts, and compare the evidence when your application changes.</div>
+<div class="aims__description">
+<div class="aims__item js-aims-text" style="">
+<p class="aims__text text">Define the API journey, choose a load pattern, and review the generated plan before execution. Preflight checks catch invalid requests before a load test begins.</p>
+</div>
+<div class="aims__item js-aims-text" style="">
+<p class="aims__text text">Follow latency, throughput, and errors as k6 runs. Keep the script, generated data, and results together so you can explain what happened.</p>
+</div>
+<div class="aims__item js-aims-text" style="">
+<p class="aims__text text">Compare runs and investigate failures. Recovery actions stay within an explicit allow-list, with an audit trail for each change.</p>
+</div>
+</div>
+<div class="aims__loader">
+<dotlottie-player autoplay="" class="lazy-lottie" data-src="https://hobro.digital/media/video/HSite_loaderv5.lottie" direction="1" loop="" playmode="normal" speed="1">
+</dotlottie-player>
+</div>
+<p class="aims__text text-small">Understand the limit before your users find it.</p>
+<a aria-label="Open workspace" class="aims__email cursor__trigger" data-effect-type="" href="/app" style="">Open workspace</a>
+</div>
+</section>
+<section class="capabilities-cta-full-width ccfw">
+<div class="container">
+<div class="ccfw__body">
+<h2 class="ccfw__title">Describe your workload.<br/>Put your application to the test.</h2>
+<div class="ccfw__btn-wrapper">
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a>
+</div>
+</div>
+</div>
+<img alt="background-image" aria-hidden="true" class="ccfw__image" src="/landing/hobro.digital/assets/images/capabilities-cta-full-width/background.webp"/>
+</section>
+<section class="partners">
+<div class="container">
+<h3 class="partners__title">
+<span class="title-secondary partners-title-js" style="">Test</span>
+<span class="title-secondary title-secondary--cursive partners-title-js" style="">CAPABILITIES</span>
+</h3>
+<div class="partners__info">
+<ul class="numbers__list">
+<li class="subtitle numbers__list-item">Plan</li>
+<li class="subtitle numbers__list-item">Generate</li>
+<li class="subtitle numbers__list-item">Execute</li>
+<li class="subtitle numbers__list-item">Monitor</li>
+<li class="subtitle numbers__list-item">Analyze</li>
+</ul>
+<div class="partners__wrapper">
+<ul class="partners__list">
+<li class="text-small">k6</li>
+<li class="text-small">Python</li>
+<li class="text-small">FastAPI</li>
+<li class="text-small">SQLite</li>
+<li class="text-small">OpenAPI</li>
+<li class="text-small">JSON Schema</li>
+</ul>
+<ul class="partners__list">
+<li class="text-small">HTTP journeys</li>
+<li class="text-small">GraphQL</li>
+<li class="text-small">Baseline</li>
+<li class="text-small">Soak</li>
+<li class="text-small">Stress</li>
+<li class="text-small">Spike</li>
+</ul>
+<ul class="partners__list">
+<li class="text-small">Breakpoints</li>
+<li class="text-small">Preflight</li>
+<li class="text-small">Datasets</li>
+<li class="text-small">Runtime bindings</li>
+<li class="text-small">Conditional steps</li>
+<li class="text-small">Polling</li>
+</ul>
+<ul class="partners__list">
+<li class="text-small">Live metrics</li>
+<li class="text-small">Run history</li>
+<li class="text-small">Comparisons</li>
+<li class="text-small">Diagnostics</li>
+<li class="text-small">Audit trail</li>
+</ul>
+</div>
+</div>
+</div>
+<svg height="0" width="0" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<clippath clippathunits="objectBoundingBox" id="clip-shape" transform="scale(0.0019, 0.0063)">
+<path d="M517.478 2.23397C471.451 36.9649 383.716 77.9818 279.379 110.737C160.367 148.1 52.9358 164.297 0 155.748C46.027 121.017 133.762 80.0001 238.098 47.2445C357.111 9.88156 464.542 -6.31521 517.478 2.23397Z"></path>
+</clippath>
+</defs>
+</svg>
+<div class="callBtn cursor__trigger js-partnets-btn" title="">
+<div class="callBtn__shape callBtn__shape--top js-partnets-btn-top" style=""></div>
+<a class="callBtn__link js-partnets-link" href="/app">Run your first test</a>
+<div class="callBtn__shape callBtn__shape--bottom js-partnets-btn-bottom" style=""></div>
+<div class="callBtn__star-box">
+<svg class="callBtn__star js-callbtn-star" fill="none" height="39" style="" width="40" xmlns="http://www.w3.org/2000/svg"><path d="m20.055 0 1.365 18.135L39.555 19.5 21.42 20.865 20.055 39 18.69 20.865.555 19.5l18.135-1.365L20.055 0Z" fill="#191919"></path></svg>
+<svg class="callBtn__star js-callbtn-star" fill="none" height="20" style="" width="21" xmlns="http://www.w3.org/2000/svg"><path d="m10.535.036.694 9.22 9.22.694-9.22.694-.694 9.22-.694-9.22-9.22-.694 9.22-.694.694-9.22Z" fill="#191919"></path></svg>
+<svg class="callBtn__star js-callbtn-star" fill="none" height="5" style="" width="5" xmlns="http://www.w3.org/2000/svg"><path d="M1.817 1.409c.06-.806 1.243-.806 1.304 0 .024.322.28.579.603.603.806.06.806 1.243 0 1.303a.654.654 0 0 0-.603.603c-.06.806-1.243.806-1.304 0a.654.654 0 0 0-.603-.603c-.806-.06-.806-1.243 0-1.303a.654.654 0 0 0 .603-.603Z" fill="#191919"></path></svg>
+<svg class="callBtn__star js-callbtn-star" fill="none" height="5" style="" width="5" xmlns="http://www.w3.org/2000/svg"><path d="M1.817 1.409c.06-.806 1.243-.806 1.304 0 .024.322.28.579.603.603.806.06.806 1.243 0 1.303a.654.654 0 0 0-.603.603c-.06.806-1.243.806-1.304 0a.654.654 0 0 0-.603-.603c-.806-.06-.806-1.243 0-1.303a.654.654 0 0 0 .603-.603Z" fill="#191919"></path></svg>
+</div>
+</div>
+</section>
+<section class="team">
+<div class="container team__container">
+<div class="team__header">
+<div class="title__box">
+<h2 class="team__title title title-js" style=""><span>Your</span><span class="title--combined">w<span class="title--hidden">o</span><img alt="" src="/landing/hobro.digital/assets/icons/letterO.svg"/>rk</span><span>flow</span></h2>
+<div class="curtains">
+<span style=""></span><span style=""></span><span style=""></span><span style=""></span><span style=""></span><span style=""></span>
+</div>
+</div>
+<div class="team__description subtitle"><span class="team__word team-word-js">One intent.</span><span class="team__word team-word-js">A complete</span><span class="team__word team-word-js">testing</span><span class="team__word team-word-js">workflow.</span></div>
+</div>
+<div class="team__wrapper">
+<div class="team__text"><p class="text js-team-text">The workflow connects intent, data, scripts, execution, and evidence. Explore the testing capabilities below. Portraits are artwork retained from the supplied page, not LoadPilot team members.</p></div>
+<div class="team__slider">
+<div class="js-team-slider" style="">
+<div class="team__slider-wrapper js-team-dragable" style=" touch-action: pan-y; cursor: grab; user-select: none">
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[1]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/NickShirokov.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[2]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/DianaShirokova.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[3]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/DmitryKei.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[4]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/PolinaOgarko.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[5]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/OleksiiHlovliuk.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[6]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/EugeneBerezhnyi.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[7]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/YanaKostina.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[8]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/AnnaKrasnorudska.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[9]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/OleksandrBerezhnoi.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[10]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/DmitriyShevchuk.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[11]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/MariiaMakhina.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[12]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/JuliaVishnevskaya.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[13]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/AntonKalinovskyi.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[14]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/Kira.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[15]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/Bogdan.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[16]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/EvgenMerkulov.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[17]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/YuriiMytrofanov.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[18]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/AlexSolovei.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[19]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/IlyaRynzhuk.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[20]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/alina-kyrychenko.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[21]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/dima-mankov.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[22]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/alina-vinnichenko.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[23]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/elizabeth-hafych.webp" style="touch-action: pan-y"/>
+</div>
+<div class="team__slide" style="touch-action: pan-y">
+<span class="team__number text-small" style="touch-action: pan-y">[24]</span>
+<img alt="Reference gallery portrait" class="team__image" loading="lazy" src="/landing/hobro.digital/api/media/file/ira-zhurakivska.webp" style="touch-action: pan-y"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<ul class="team__list" style="max-width: 1324px">
+<li class="team__member">
+<span class="team__name">k6</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">PYTHON</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">FASTAPI</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">SQLITE</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">OPENAPI</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">JSON SCHEMA</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">HTTP JOURNEYS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">GRAPHQL</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">BASELINE</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">SOAK</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">STRESS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">SPIKE</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">BREAKPOINTS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">PREFLIGHT</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">DATASETS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">RUNTIME BINDINGS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">CONDITIONAL STEPS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">POLLING</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">LIVE METRICS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">RUN HISTORY</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">COMPARISONS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">DIAGNOSTICS</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">AUDIT TRAIL</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+<li class="team__member">
+<span class="team__name">k6</span>
+<span class="team__position text-small">Testing capability</span>
+</li>
+</ul>
+</div>
+</section>
+<footer class="footer">
+<div class="title__box">
+<h2 class="title footer__title title-js" style=""><span>LOADPILOT</span><span>RUN</span></h2>
+<div class="curtains">
+<span style=""></span><span style=""></span><span style=""></span><span style=""></span><span style=""></span><span style=""></span>
+</div>
+</div>
+<div class="footer__wrapper">
+<div class="footer__left">
+<div class="footer__text">
+<span class="footer__numbers">20<span class="js-year">26</span></span>
+<span class="text-small text-small--xl">© LoadPilot</span>
+<a class="footer__link text-small cursor__trigger" href="/docs">API documentation</a>
+</div>
+<div class="footer__media">
+<video autoplay="" class="footer__video lazyvideo autoplay" loop="" muted="" playsinline="" poster="/assets/images/footer-poster.webp" preload="none">
+<source data-src="/assets/video/footer.h265.mp4" src="https://hobro.digital/assets/video/footer.h265.mp4" type="video/mp4; codecs=hvc1"/>
+<source data-src="/assets/video/footer.av1.mp4" src="https://hobro.digital/assets/video/footer.av1.mp4" type="video/mp4; codecs=av01.0.05M.08,opus"/>
+                    Your browser does not support the video tag.
+                </video>
+</div>
+</div>
+<div class="footer__right" style="max-width: 1324px">
+<div class="contact-links contact-links-js">
+<svg class="contact-links__icon js-footer-icon-top" fill="none" height="22" style="" width="43" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#a)">
+<path d="M42.538 21.47v-.231C42.515 9.684 33.335.014 21.271 0 9.268-.014-.023 9.638 0 21.304v.161h42.533l.005.005Zm-24.94-.78c.102-2.426.199-4.815.296-7.222h2.828v7.221h-3.128.004Zm.42-8.285c.153-1.266.306-2.48.444-3.65h2.264v3.65h-2.712.005Zm-1.297.019c-.786-.014-1.576-.005-2.463-.005.346-1.39.68-2.707 1.007-4.033.776.087 1.474.161 2.148.235-.134 1.188-.263 2.329-.388 3.465-.023.194-.046.342-.304.338Zm-3.212 8.182a46.43 46.43 0 0 1 .569-6.93c.014-.083.125-.213.19-.213.863-.014 1.727-.009 2.591-.009-.102 2.453-.199 4.847-.296 7.263H13.56c-.027-.055-.05-.083-.05-.106v-.005Zm-.314-8.215h-2.629c.43-1.529.984-2.97 1.691-4.347.037-.074.167-.167.24-.157.578.101 1.151.23 1.715.346-.342 1.405-.68 2.772-1.017 4.158ZM9.37 20.703c.004-2.462.305-4.86.882-7.235h2.694c-.19 2.416-.384 4.819-.573 7.235H9.365h.005Zm-.102-8.293c-.8.014-1.598.01-2.384.01-.014-.043-.028-.061-.023-.07.656-1.834 1.608-3.507 2.781-5.055.051-.069.218-.11.31-.088.439.111.873.245 1.257.36-.569 1.581-1.114 3.12-1.678 4.658-.032.088-.17.185-.258.185h-.005ZM5.202 20.6c.047-2.365.412-4.68 1.137-6.93.028-.088.13-.212.203-.212.869-.014 1.733-.01 2.523-.01l-.878 7.254H5.249c-.024-.05-.047-.074-.047-.102ZM2.786 13.46c.836-.014 1.673-.01 2.55-.01-.757 2.384-1.104 4.782-1.182 7.254H1.058c.042-.564.065-1.1.12-1.63a19.46 19.46 0 0 1 1.363-5.397c.037-.093.162-.208.25-.213l-.005-.004Zm4.957-7.06c.32.11.629.259.966.402a22.556 22.556 0 0 0-2.938 5.41c-.033.088-.167.199-.254.204-.781.013-1.567.009-2.361.009.004-.074 0-.12.013-.153a19.789 19.789 0 0 1 4.288-5.789c.065-.06.208-.106.286-.078v-.005ZM12 3.276c-.716.707-1.447 1.395-2.144 2.12-.555.573-.536.592-1.257.231-.023-.009-.037-.032-.13-.12 1.174-.78 2.33-1.543 3.485-2.31.013.028.032.051.046.079Zm2.749-.518c-.545.652-1.058 1.206-1.511 1.811-.462.62-.864 1.285-1.303 1.918-.05.07-.185.138-.263.12-.388-.088-.772-.203-1.206-.324 1.252-1.404 2.6-2.596 4.283-3.53v.005Zm2.388-.383c-.194.268-.42.522-.568.813-.628 1.229-1.224 2.467-1.848 3.696-.065.13-.231.314-.328.305-.5-.06-.989-.17-1.53-.277 1.105-1.871 2.44-3.442 4.279-4.537h-.005Zm2.033-.532c-.794 1.844-1.173 3.803-1.566 5.762l-1.945-.217c.795-2.14 1.75-4.09 3.511-5.55v.005Zm1.566 5.799h-2.088c.471-2.209.795-4.376 2.088-6.233v6.233Zm12.738 5.803c.721 0 1.507.014 2.292-.01.291-.009.42.088.476.365.319 1.567.679 3.128.956 4.7.13.71.111 1.45.157 2.19h-2.989c-.3-2.44-.596-4.829-.892-7.25v.005Zm-.19-1.035c-.1 0-.244-.148-.286-.259-.175-.48-.3-.98-.48-1.455-.393-1.03-.809-2.047-1.23-3.11.408-.12.81-.221 1.198-.36.254-.092.406-.028.54.199.689 1.164 1.405 2.31 2.07 3.483.263.462.43.975.665 1.511-.873 0-1.677.01-2.471-.014l-.005.005Zm-3.686 1.058h2.707c.569 2.398.878 4.796.887 7.226h-3.007a5674.27 5674.27 0 0 1-.587-7.226Zm-.231-1.058c-.337-1.39-.675-2.768-1.021-4.19.559-.116 1.095-.24 1.64-.32.106-.013.296.116.347.227.365.79.72 1.585 1.04 2.393.24.61.424 1.243.641 1.89h-2.647Zm-3.678 1.058h2.745c.397 2.398.591 4.805.61 7.244h-3.059c-.097-2.434-.199-4.832-.296-7.244Zm-.563-4.847 2.166-.235c.333 1.335.661 2.66.998 4.02h-2.702c-.157-1.28-.305-2.523-.458-3.785h-.004Zm-3.304 4.856h2.819c.101 2.426.198 4.824.3 7.235H21.82v-7.235Zm-.014-4.676 2.269-.106c.152 1.257.3 2.467.453 3.706h-2.722V8.8Zm.005-7.387c1.294 1.876 1.626 4.052 2.088 6.25h-2.088v-6.25Zm5.087 5.97c-.68.078-1.29.152-1.95.225-.383-2-.78-3.936-1.57-5.775 1.755 1.465 2.702 3.424 3.515 5.544l.005.005Zm2.781-.495c-.6.115-1.136.221-1.728.337-.651-1.76-1.423-3.419-2.546-4.902 1.825 1.127 3.142 2.717 4.274 4.565Zm-1.742-3.992c1.59.85 2.916 2.01 4.135 3.391-.425.12-.794.236-1.169.314-.092.019-.258-.041-.3-.115a21.682 21.682 0 0 0-2.661-3.59h-.005Zm6.127 2.68c-.558.24-1.024.154-1.4-.26-.065-.068-.13-.142-.199-.207-.647-.615-1.294-1.224-2.014-1.913 1.326.72 2.536 1.428 3.617 2.38h-.004Zm5.391 6.842c-.785 0-1.501-.014-2.213.01-.295.009-.43-.088-.536-.37a21.53 21.53 0 0 0-2.314-4.477l-.54-.79c.267-.116.498-.199.715-.32.273-.152.458-.092.684.13a21.083 21.083 0 0 1 3.802 4.995c.14.25.255.508.412.822h-.01Zm1.9 6.431c.073.61.092 1.225.138 1.848h-3.1c-.074-2.471-.444-4.87-1.183-7.249.822 0 1.594.014 2.366-.009.295-.01.397.111.498.36a20.736 20.736 0 0 1 1.285 5.05h-.005Z" fill="#151515"></path>
+</g>
+<defs>
+<clippath id="a">
+<path d="M0 0h42.538v21.47H0z" fill="#fff"></path>
+</clippath>
+</defs>
+</svg>
+<div class="contact-links__wrapper" style="">
+<div class="contact-links__text text-small contact-links__text--address" style="">
+<span>Run locally:</span>
+<span>Your device.<br/>Your target.<br/>Your test history.</span>
+</div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small" style="">
+<span>Workspace:</span>
+<a class="contact-link cursor__trigger" href="/app">Open workspace</a>
+</div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small" style="">
+<span>Docs:</span>
+<a class="contact-link cursor__trigger" href="/docs">API documentation</a>
+<a class="capabilities-button-component cursor__trigger js-nav-cursor-hover" href="/app">
+<svg aria-hidden="true" class="capabilities-button-component__decor-image" fill="none" height="13" viewbox="0 0 15 13" width="15" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 7.47059V7.79412V7.85882C1 9.30837 1 10.0331 1.2821 10.5868C1.53024 11.0738 1.92619 11.4698 2.4132 11.7179C2.96685 12 3.69163 12 5.14118 12H9.8C11.2495 12 11.9743 12 12.528 11.7179C13.015 11.4698 13.4109 11.0738 13.6591 10.5868C13.9412 10.0331 13.9412 9.30837 13.9412 7.85882V7.79412V7.47059M7.47059 8.76471V1M7.47059 1L10.0588 3.58824M7.47059 1L4.88235 3.58824" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.29412"></path>
+</svg>
+    OPEN WORKSPACE
+</a>
+</div>
+<div class="contact-links__dot"></div>
+<div class="contact-links__text text-small" style="">
+<span>Source:</span>
+<ul class="socials">
+<li class="socials__item">
+<a aria-label="GitHub" class="socials__link cursor__trigger" href="https://github.com/sandeeptjs/loadpilot">GitHub</a>
+</li>
+<li class="socials__item">
+<a aria-label="Docs" class="socials__link cursor__trigger" href="/docs">Docs</a>
+</li>
+<li class="socials__item">
+<a aria-label="Tests" class="socials__link cursor__trigger" href="/app">Tests</a>
+</li>
+<li class="socials__item">
+<a aria-label="Runs" class="socials__link cursor__trigger" href="/app">Runs</a>
+</li>
+<li class="socials__item">
+<a aria-label="Home" class="socials__link cursor__trigger" href="/">Home</a>
+</li>
+</ul>
+</div>
+</div>
+<svg class="contact-links__icon contact-links__icon-bottom js-footer-icon-bottom" fill="none" height="22" style="" width="43" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#a)">
+<path d="M42.538 21.47v-.231C42.515 9.684 33.335.014 21.271 0 9.268-.014-.023 9.638 0 21.304v.161h42.533l.005.005Zm-24.94-.78c.102-2.426.199-4.815.296-7.222h2.828v7.221h-3.128.004Zm.42-8.285c.153-1.266.306-2.48.444-3.65h2.264v3.65h-2.712.005Zm-1.297.019c-.786-.014-1.576-.005-2.463-.005.346-1.39.68-2.707 1.007-4.033.776.087 1.474.161 2.148.235-.134 1.188-.263 2.329-.388 3.465-.023.194-.046.342-.304.338Zm-3.212 8.182a46.43 46.43 0 0 1 .569-6.93c.014-.083.125-.213.19-.213.863-.014 1.727-.009 2.591-.009-.102 2.453-.199 4.847-.296 7.263H13.56c-.027-.055-.05-.083-.05-.106v-.005Zm-.314-8.215h-2.629c.43-1.529.984-2.97 1.691-4.347.037-.074.167-.167.24-.157.578.101 1.151.23 1.715.346-.342 1.405-.68 2.772-1.017 4.158ZM9.37 20.703c.004-2.462.305-4.86.882-7.235h2.694c-.19 2.416-.384 4.819-.573 7.235H9.365h.005Zm-.102-8.293c-.8.014-1.598.01-2.384.01-.014-.043-.028-.061-.023-.07.656-1.834 1.608-3.507 2.781-5.055.051-.069.218-.11.31-.088.439.111.873.245 1.257.36-.569 1.581-1.114 3.12-1.678 4.658-.032.088-.17.185-.258.185h-.005ZM5.202 20.6c.047-2.365.412-4.68 1.137-6.93.028-.088.13-.212.203-.212.869-.014 1.733-.01 2.523-.01l-.878 7.254H5.249c-.024-.05-.047-.074-.047-.102ZM2.786 13.46c.836-.014 1.673-.01 2.55-.01-.757 2.384-1.104 4.782-1.182 7.254H1.058c.042-.564.065-1.1.12-1.63a19.46 19.46 0 0 1 1.363-5.397c.037-.093.162-.208.25-.213l-.005-.004Zm4.957-7.06c.32.11.629.259.966.402a22.556 22.556 0 0 0-2.938 5.41c-.033.088-.167.199-.254.204-.781.013-1.567.009-2.361.009.004-.074 0-.12.013-.153a19.789 19.789 0 0 1 4.288-5.789c.065-.06.208-.106.286-.078v-.005ZM12 3.276c-.716.707-1.447 1.395-2.144 2.12-.555.573-.536.592-1.257.231-.023-.009-.037-.032-.13-.12 1.174-.78 2.33-1.543 3.485-2.31.013.028.032.051.046.079Zm2.749-.518c-.545.652-1.058 1.206-1.511 1.811-.462.62-.864 1.285-1.303 1.918-.05.07-.185.138-.263.12-.388-.088-.772-.203-1.206-.324 1.252-1.404 2.6-2.596 4.283-3.53v.005Zm2.388-.383c-.194.268-.42.522-.568.813-.628 1.229-1.224 2.467-1.848 3.696-.065.13-.231.314-.328.305-.5-.06-.989-.17-1.53-.277 1.105-1.871 2.44-3.442 4.279-4.537h-.005Zm2.033-.532c-.794 1.844-1.173 3.803-1.566 5.762l-1.945-.217c.795-2.14 1.75-4.09 3.511-5.55v.005Zm1.566 5.799h-2.088c.471-2.209.795-4.376 2.088-6.233v6.233Zm12.738 5.803c.721 0 1.507.014 2.292-.01.291-.009.42.088.476.365.319 1.567.679 3.128.956 4.7.13.71.111 1.45.157 2.19h-2.989c-.3-2.44-.596-4.829-.892-7.25v.005Zm-.19-1.035c-.1 0-.244-.148-.286-.259-.175-.48-.3-.98-.48-1.455-.393-1.03-.809-2.047-1.23-3.11.408-.12.81-.221 1.198-.36.254-.092.406-.028.54.199.689 1.164 1.405 2.31 2.07 3.483.263.462.43.975.665 1.511-.873 0-1.677.01-2.471-.014l-.005.005Zm-3.686 1.058h2.707c.569 2.398.878 4.796.887 7.226h-3.007a5674.27 5674.27 0 0 1-.587-7.226Zm-.231-1.058c-.337-1.39-.675-2.768-1.021-4.19.559-.116 1.095-.24 1.64-.32.106-.013.296.116.347.227.365.79.72 1.585 1.04 2.393.24.61.424 1.243.641 1.89h-2.647Zm-3.678 1.058h2.745c.397 2.398.591 4.805.61 7.244h-3.059c-.097-2.434-.199-4.832-.296-7.244Zm-.563-4.847 2.166-.235c.333 1.335.661 2.66.998 4.02h-2.702c-.157-1.28-.305-2.523-.458-3.785h-.004Zm-3.304 4.856h2.819c.101 2.426.198 4.824.3 7.235H21.82v-7.235Zm-.014-4.676 2.269-.106c.152 1.257.3 2.467.453 3.706h-2.722V8.8Zm.005-7.387c1.294 1.876 1.626 4.052 2.088 6.25h-2.088v-6.25Zm5.087 5.97c-.68.078-1.29.152-1.95.225-.383-2-.78-3.936-1.57-5.775 1.755 1.465 2.702 3.424 3.515 5.544l.005.005Zm2.781-.495c-.6.115-1.136.221-1.728.337-.651-1.76-1.423-3.419-2.546-4.902 1.825 1.127 3.142 2.717 4.274 4.565Zm-1.742-3.992c1.59.85 2.916 2.01 4.135 3.391-.425.12-.794.236-1.169.314-.092.019-.258-.041-.3-.115a21.682 21.682 0 0 0-2.661-3.59h-.005Zm6.127 2.68c-.558.24-1.024.154-1.4-.26-.065-.068-.13-.142-.199-.207-.647-.615-1.294-1.224-2.014-1.913 1.326.72 2.536 1.428 3.617 2.38h-.004Zm5.391 6.842c-.785 0-1.501-.014-2.213.01-.295.009-.43-.088-.536-.37a21.53 21.53 0 0 0-2.314-4.477l-.54-.79c.267-.116.498-.199.715-.32.273-.152.458-.092.684.13a21.083 21.083 0 0 1 3.802 4.995c.14.25.255.508.412.822h-.01Zm1.9 6.431c.073.61.092 1.225.138 1.848h-3.1c-.074-2.471-.444-4.87-1.183-7.249.822 0 1.594.014 2.366-.009.295-.01.397.111.498.36a20.736 20.736 0 0 1 1.285 5.05h-.005Z" fill="#151515"></path>
+</g>
+<defs>
+<clippath id="a">
+<path d="M0 0h42.538v21.47H0z" fill="#fff"></path>
+</clippath>
+</defs>
+</svg>
+</div>
+</div>
+</div>
+</footer>
+</main>
+<div class="cursor cursor--1" data-opacity-enter="0" data-scale-enter="0" style="">
+<div class="cursor__inner"></div>
+</div>
+<div class="cursor cursor--2" data-amt="0.15" data-opacity-enter=".5" data-scale-enter="1.5" style="">
+<div class="cursor__inner" style="border-radius: 50%; height: 36px; width: 36px"></div>
+</div>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/body-scroll-lock@4.0.0-beta.0/lib/bodyScrollLock.min.js"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/ScrollSmoother.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/CustomEase.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/CustomBounce.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/Draggable.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/InertiaPlugin.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/SplitText.min.js"></script>
+<script defer="" src="/landing/hobro.digital/plugins/MorphSVGPlugin.min.js"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/flatpickr/__saved_response"></script>
+<script defer="" src="/landing/cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script src="/landing/hobro.digital/js/main-698d9cf43f.js" type="module"></script>
+<div></div></body></html>

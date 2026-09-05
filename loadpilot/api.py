@@ -323,6 +323,13 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
         return await Remediator(service).apply(action.run_id, action.previous_size, rollback_id=action_id)
 
     web_dist = Path(__file__).resolve().parent.parent / 'web' / 'dist'
+    if (web_dist / 'landing' / 'index.html').exists():
+        app.mount('/landing', StaticFiles(directory=web_dist / 'landing'), name='landing')
+
+        @app.get('/', include_in_schema=False)
+        def landing():
+            return FileResponse(web_dist / 'landing' / 'index.html')
+
     if (web_dist / 'assets').exists():
         app.mount('/assets', StaticFiles(directory=web_dist / 'assets'), name='assets')
 
