@@ -1,0 +1,39 @@
+[project]
+name = "loadpilot"
+version = "0.1.0"
+description = "Autonomous, evidence-driven performance testing control plane"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "jinja2>=3.1,<4",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "prometheus-client>=0.22,<1",
+  "pyyaml>=6,<7",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+schemathesis = ["schemathesis>=4.0,<5"]
+temporal = ["temporalio>=1.16,<2"]
+telemetry = [
+  "opentelemetry-api>=1.36,<2",
+  "opentelemetry-sdk>=1.36,<2",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.36,<2",
+]
+dev = ["pytest>=8.4,<10", "pytest-asyncio>=1.1,<2", "ruff>=0.12,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 110
+extend-exclude = [".research", ".tools", ".venv", "artifacts", "web/node_modules", "web/dist"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

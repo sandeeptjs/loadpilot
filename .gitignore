@@ -1,0 +1,12 @@
+.research/
+.tools/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+loadpilot.db
+generated-tests/*.js
+generated-tests/*.json
+artifacts/
+web/node_modules/
+web/dist/

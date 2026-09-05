@@ -1,0 +1,2 @@
+"""Instrumented demonstration target."""
+

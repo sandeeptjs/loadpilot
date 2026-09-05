@@ -1,0 +1,100 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    ports: ["8000:8000"]
+    environment:
+      LOADPILOT_PROMETHEUS_URL: http://prometheus:9090
+      TEMPORAL_ADDRESS: temporal:7233
+    volumes:
+      - generated-tests:/app/generated-tests
+      - loadpilot-data:/app/data
+    depends_on: [postgres, temporal, prometheus]
+
+  sandbox-target:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.target
+    ports: ["8080:8080"]
+    environment:
+      SANDBOX_DB_POOL_SIZE: "12"
+      SANDBOX_DB_LATENCY_MS: "35"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: loadpilot
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: loadpilot
+    secrets: [postgres_password]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  temporal:
+    image: temporalio/auto-setup:1.28
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: loadpilot
+      POSTGRES_PWD_FILE: /run/secrets/postgres_password
+      POSTGRES_SEEDS: postgres
+    secrets: [postgres_password]
+    depends_on: [postgres]
+
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    ports: ["9090:9090"]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--web.enable-remote-write-receiver"]
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    ports: ["9093:9093"]
+    volumes:
+      - ./infrastructure/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.136.0
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    ports: ["4317:4317", "4318:4318", "8889:8889"]
+    volumes:
+      - ./infrastructure/otel/collector.yml:/etc/otelcol-contrib/config.yml:ro
+    depends_on: [sandbox-target]
+
+  k6:
+    image: grafana/k6:latest
+    profiles: [runner]
+    volumes:
+      - generated-tests:/scripts:ro
+    environment:
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+      TARGET_BASE_URL: http://sandbox-target:8080
+    depends_on: [sandbox-target, prometheus]
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    profiles: [observability]
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+
+  holmes:
+    image: us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest
+    profiles: [investigation]
+    environment:
+      PROMETHEUS_URL: http://prometheus:9090
+    depends_on: [prometheus]
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+
+volumes:
+  generated-tests:
+  loadpilot-data:
+  postgres-data:
+  prometheus-data:
+
