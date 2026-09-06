@@ -3,6 +3,19 @@ from __future__ import annotations
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def offline_provider(monkeypatch):
+    """Keep the suite hermetic.
+
+    A developer's `.env` or an ambient GEMINI/GOOGLE/OPENAI key must never turn a
+    deterministic test into a billed network call. Tests that exercise the provider
+    pass an explicit model plus a mock transport, which overrides this.
+    """
+    for name in ('GEMINI_API_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY', 'LOADPILOT_LLM_API_KEY', 'LOADPILOT_LLM_BASE_URL'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('LOADPILOT_LLM_MODEL', '')
+
+
 @pytest.fixture
 def checkout_openapi():
     return {

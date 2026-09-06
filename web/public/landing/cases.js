@@ -67,7 +67,7 @@
       var want = s.dataset.src;
       if (want && s.getAttribute('src') !== want) { s.setAttribute('src', want); dirty = true; }
     });
-    if (dirty) { try { v.load(); } catch (e) {} }
+    if (dirty) { try { v.load(); } catch { /* a detached element cannot reload; nothing to recover */ } }
   }
 
   function play(v) {
@@ -86,10 +86,10 @@
 
   function stop(v) {
     v.dataset.play = 'false';
-    try { v.pause(); } catch (e) {}   // deliberately no currentTime reset
+    try { v.pause(); } catch { /* nothing to pause */ }   // deliberately no currentTime reset
   }
 
-  function syncAll() { videos.forEach(function (v) { inWanted(v) ? play(v) : stop(v); }); }
+  function syncAll() { videos.forEach(function (v) { if (inWanted(v)) { play(v); } else { stop(v); } }); }
 
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {

@@ -132,10 +132,9 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
 
     @app.get('/api/capabilities')
     def capabilities():
-        return {'scenario_features': ['conditional steps', 'bounded polling and read retries', 'datasets and unique iteration values', 'basic auth and login/token journeys', 'multipart uploads', 'multi-service operations', 'saved definitions and recovery', 'ordered steps', 'nested JSON bindings', 'response assertions', 'weighted journeys', 'bounded repetition', 'preflight before load', 'JSON/form/text/multipart requests', 'environment credential references'], 'scenario_sources': ['openapi', 'manual', 'har', 'postman', 'graphql documents'], 'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline', 'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
+        return {'scenario_features': ['conditional steps', 'bounded polling and read retries', 'datasets and unique iteration values', 'basic auth and login/token journeys', 'multipart uploads', 'multi-service operations', 'saved definitions and recovery', 'ordered steps', 'nested JSON bindings', 'response assertions', 'weighted journeys', 'bounded repetition', 'preflight before load', 'JSON/form/text/multipart requests', 'environment credential references'], 'scenario_sources': ['openapi', 'manual', 'har', 'postman', 'graphql documents'], 'execution_backends': ['LOCAL'], 'test_types': ['BASELINE', 'LOAD', 'STRESS', 'SOAK', 'SPIKE', 'BREAKPOINT'], 'ai_mode': 'provider' if settings.ai_enabled else 'offline','ai_model': settings.llm_model if settings.ai_enabled else '',  'max_vus': settings.max_vus, 'max_duration_seconds': settings.max_duration_seconds, 'max_rps': settings.max_rps, 'sandbox_openapi_url': settings.sandbox_url.rstrip('/') + '/openapi.json', 'remediation_enabled': settings.allow_sandbox_remediation and bool(settings.sandbox_control_token), 'scheduling': 'Persisted one-time jobs; relative delays or timezone-aware run_at', 'limitations': ['Only local backend is execution-qualified', 'RPS requires one HTTP operation', 'Offline parsing uses deterministic patterns', 'Sandbox pool is modeled, not PostgreSQL', 'No production multi-tenant authentication']}
 
-    @app.post('/api/tests', status_code=201)
-    async def create_test(request: CreateTestRequest):
+    async def _resolve_source(request: CreateTestRequest) -> dict:
         payload = request.model_dump(exclude={'validate_script', 'source_url', 'credentials_reference'})
         if request.source_url:
             settings.check_target(request.source_url)
@@ -153,7 +152,33 @@ def create_app(settings: Settings | None = None, service: LoadPilotService | Non
                 payload['base_url'] = f'{parsed.scheme}://{parsed.netloc}'
         if payload['source'] is None:
             raise ValueError('Provide source or source_url')
+        return payload
+
+    @app.post('/api/tests', status_code=201)
+    async def create_test(request: CreateTestRequest):
+        payload = await _resolve_source(request)
         return await service.prepare(**payload, credentials_reference=request.credentials_reference, validate=request.validate_script)
+
+    @app.post('/api/scenario/preview')
+    async def preview_scenario(request: CreateTestRequest, refine: bool = Query(False)):
+        """Read a requirement without running anything.
+
+        The composer calls this while somebody is still typing, so the interpretation,
+        the resolved sequence and the load profile are visible before a run exists.
+        `refine=true` additionally spends one bounded model call to sharpen the reading.
+        """
+        payload = await _resolve_source(request)
+        return await service.interpret(
+            prompt=payload['prompt'],
+            source_type=payload['source_type'],
+            source=payload['source'],
+            application_name=payload['application_name'],
+            base_url=payload['base_url'],
+            environment=payload['environment'],
+            intent_overrides=payload['intent_overrides'],
+            journeys=payload['journeys'],
+            refine=refine,
+        )
 
     @app.post('/api/definitions', status_code=201)
     def save_definition(request: DefinitionRequest):

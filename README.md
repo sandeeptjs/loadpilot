@@ -20,9 +20,17 @@ Use `--api-port` and `--target-port` if ports are occupied. `--healthy` starts w
 
 ## AI configuration
 
-Copy `.env.example` to `.env`, then set `LOADPILOT_LLM_BASE_URL`, `LOADPILOT_LLM_MODEL`, and `LOADPILOT_LLM_API_KEY`. The provider must implement OpenAI-compatible Chat Completions. JSON responses pass Pydantic validation before planning. The model never receives execution tools or control tokens.
+Copy `.env.example` to `.env` and name a model:
 
-Without a configured model/key the app explicitly uses **offline mode**: deterministic intent parsing and evidence summaries. Do not present offline summaries as AI output. Provider HTTP contracts are tested with a mock; a credentialed provider run still needs validation.
+```
+LOADPILOT_LLM_MODEL=gemini-3.6-flash
+```
+
+That is the whole configuration for Gemini. Google publishes it behind an OpenAI-compatible Chat Completions surface, so naming a `gemini-*` model settles the base URL, and the key is read from the ambient `GEMINI_API_KEY` or `GOOGLE_API_KEY` rather than duplicated into this project. An `openai/*`-shaped deployment works the same way through `OPENAI_API_KEY`. Set `LOADPILOT_LLM_BASE_URL` and `LOADPILOT_LLM_API_KEY` explicitly only for a provider this resolution does not cover. `/api/capabilities` reports the resolved `ai_mode` and `ai_model`, so a misconfiguration is visible before a run.
+
+With a model configured, the same prompt drives the run end to end: the model sharpens the deterministic reading of the requirement and may propose the workflow itself. What it proposes is checked, not trusted. `LOADPILOT_LLM_RETRIES` (default 2, exponential backoff) retries only refusals that say nothing about the request — 429 quota windows, 503 overload, an envelope that will not parse, a reply cut off at `LOADPILOT_LLM_MAX_TOKENS`. A reply the schema rejects is the model's considered answer and is not asked for twice. A workflow that names an operation the API does not have, reads a value from a pointer the contract contradicts, or cannot complete one preflight iteration is repaired where the contract can say what was meant and otherwise replaced by the deterministic journey planned beside it. Every substitution is reported on the run as `journey_source`, `journey_repairs`, `journey_error` or `journey_preflight_error` and recorded in the audit log.
+
+Without a configured model/key the app explicitly uses **offline mode**: deterministic intent parsing and evidence summaries. Do not present offline summaries as AI output. A quota refusal or an outage is not a failure either; the run keeps the deterministic reading and records why. Provider HTTP contracts are tested with a mock; a credentialed provider run still needs validation.
 
 ## Verification
 

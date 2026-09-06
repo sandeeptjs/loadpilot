@@ -77,7 +77,9 @@ class TestPlanner:
         elif test_type == TestType.SPIKE:
             levels = [target, peak, target]
         else:
-            levels = [target]
+            # A stated ceiling on a steady workload is a ramp instruction: "from 10 to 200
+            # users" holds at both ends instead of quietly measuring only the first.
+            levels = sorted({target, peak}) if maximum else [target]
         if duration < len(levels) * 2 + 1:
             raise ValueError('Duration is too short for ramp and measurement stages')
         ramp_seconds = max(1, int(duration * .05))
