@@ -220,6 +220,10 @@ class PerformanceTestPlan(StrictModel):
     executor: str
     stages: list[LoadStage] = Field(min_length=1)
     journeys: list[UserJourney] = Field(min_length=1)
+    # The workflow the deterministic reader would have executed, planned beside a model-authored
+    # one so a journey that cannot complete a single iteration has somewhere to fall back to
+    # instead of failing a run the offline path could have run. Empty when they are the same.
+    fallback_journeys: list[UserJourney] = Field(default_factory=list)
     thresholds: list[PerformanceThreshold] = Field(default_factory=list)
     payload_sources: list[str] = Field(default_factory=list)
     abort_conditions: list[str] = Field(default_factory=list)

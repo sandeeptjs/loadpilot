@@ -1,9 +1,10 @@
 """Bounded JSON inference. Models never receive execution tools or credentials."""
+import asyncio
 import json
 import re
 
 import httpx
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from .audit import redact
 from .models import SLOs, StrictModel, TestType, UserJourney
@@ -29,6 +30,18 @@ class Narrative(StrictModel):
     limitations: list[str] = Field(default_factory=list, max_length=10)
 
 
+class TransientProviderError(ValueError):
+    """A refusal that says nothing about the request: a quota window that resets, a model
+    under load, a reply cut off at the token budget. Worth one more attempt before the run
+    falls back to the deterministic reading. Still a ValueError, so a caller that gives up
+    on the provider catches it exactly as before."""
+
+
+# Statuses a provider uses for "not now" rather than "not ever".
+_RETRY_STATUS = frozenset({408, 409, 425, 429, 500, 502, 503, 504})
+RETRY_BACKOFF_SECONDS = .5
+
+
 class JsonProvider:
     def __init__(self, settings: Settings, transport=None):
         self.settings = settings
@@ -49,14 +62,35 @@ class JsonProvider:
             raise ValueError('Model input exceeds the bounded context budget; supply a smaller operation specification or explicit journeys')
         if self.settings.llm_json_mode:
             payload['response_format'] = {'type': 'json_object'}
+        # A shared free-tier model answers with 429 and 503 often enough that one attempt is
+        # not a fair test of it. Retries are bounded and backed off, and a provider that keeps
+        # refusing still degrades to the deterministic reading rather than failing the run.
         async with httpx.AsyncClient(timeout=self.settings.llm_timeout, transport=self.transport) as client:
-            response = await client.post(self.settings.llm_base_url.rstrip('/') + '/chat/completions', headers={'Authorization': 'Bearer ' + self.settings.llm_api_key}, json=payload)
+            for attempt in range(self.settings.llm_retries + 1):
+                try:
+                    return await self._attempt(client, payload, model)
+                except (TransientProviderError, httpx.HTTPError):
+                    if attempt == self.settings.llm_retries:
+                        raise
+                    await asyncio.sleep(RETRY_BACKOFF_SECONDS * 2 ** attempt)
+
+    async def _attempt(self, client, payload, model):
+        response = await client.post(self.settings.llm_base_url.rstrip('/') + '/chat/completions', headers={'Authorization': 'Bearer ' + self.settings.llm_api_key}, json=payload)
         if response.status_code != 200:
-            raise ValueError(f'Model provider returned HTTP {response.status_code}; check provider configuration')
+            refused = TransientProviderError if response.status_code in _RETRY_STATUS else ValueError
+            raise refused(f'Model provider returned HTTP {response.status_code}; check provider configuration')
         try:
-            content = response.json()['choices'][0]['message']['content']
-            return model.model_validate_json(content)
+            choice = response.json()['choices'][0]
+            content = choice['message']['content']
         except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise TransientProviderError('Model provider returned an unreadable response envelope') from exc
+        if choice.get('finish_reason') == 'length':
+            # Reasoning models spend the completion budget before they answer. Half a JSON
+            # object is a spent budget, not a malformed reading, and the setting is named.
+            raise TransientProviderError('Model provider stopped at LOADPILOT_LLM_MAX_TOKENS before completing its JSON')
+        try:
+            return model.model_validate_json(content)
+        except ValidationError as exc:
             raise ValueError('Model provider returned invalid structured output') from exc
 
     async def parse(self, prompt, operations):
